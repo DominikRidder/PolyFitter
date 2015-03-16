@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -44,17 +45,18 @@ public class LowestSquare implements FitterAlgorithm {
 	}
 
 	public double getProblem() {
-		if (polynom == null){
-			System.out.println("You have to perform the fit method before you can get a problem.");
-                        return -1;
-                }
-                double prob = 0;
+		if (polynom == null) {
+			System.out
+					.println("You have to perform the fit method before you can get a problem.");
+			return -1;
+		}
+		double prob = 0;
 		RealMatrix C = A.multiply(polynom).subtract(b);
 		RealVector D = C.getColumnVector(0);
 
-                for(int i=0; i<D.getDimension();i++){
-                prob += Math.abs(D.getEntry(i));
-                }
+		for (int i = 0; i < D.getDimension(); i++) {
+			prob += Math.abs(D.getEntry(i));
+		}
 		return prob;
 	}
 
@@ -63,22 +65,18 @@ public class LowestSquare implements FitterAlgorithm {
 	 * minimal.
 	 */
 	public double[] fit(float[][] points) {
-		if (points[0].length == 3){
-			if (degree != 1){
-			System.out.println("This FitterAlgorithm cant fit 3d Points yet, except for degree = 1.");
-			System.exit(1);
-			}
+		if (points[0].length == 3) {
+//			if (degree != 1) {
+//				System.out
+//						.println("This FitterAlgorithm cant fit 3d Points yet, except for degree = 1.");
+//				System.exit(1);
+//			}
 			return fit3d(points);
 		}
 		int numberofpoints = points.length;
 		if (!degreeset) {
-			System.out.println("The degree of the polynom is not set. Setting highest possible degree (d = "
-							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints-1;
-		}
-		if (degree >= numberofpoints) {
 			System.out
-					.println("The degree is to high for this algorithm. Setting highest possible degree (d = "
+					.println("The degree of the polynom is not set. Setting highest possible degree (d = "
 							+ (numberofpoints - 1) + ").");
 			degree = numberofpoints - 1;
 		}
@@ -100,7 +98,7 @@ public class LowestSquare implements FitterAlgorithm {
 
 		RealMatrix C = AT.multiply(A);
 
-		C = new LUDecomposition(C).getSolver().getInverse();
+		C = new QRDecomposition(C).getSolver().getInverse();
 
 		RealMatrix D = AT.multiply(b);
 
@@ -110,13 +108,14 @@ public class LowestSquare implements FitterAlgorithm {
 
 		return polynom.getColumn(0);
 	}
-	
+
 	public double[] fit3d(float[][] points) {
 		int numberofpoints = points.length;
 		if (!degreeset) {
-			System.out.println("The degree of the polynom is not set. Setting highest possible degree (d = "
+			System.out
+					.println("The degree of the polynom is not set. Setting highest possible degree (d = "
 							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints-1;
+			degree = numberofpoints - 1;
 		}
 		if (degree >= numberofpoints) {
 			System.out
@@ -125,17 +124,23 @@ public class LowestSquare implements FitterAlgorithm {
 			degree = numberofpoints - 1;
 		}
 
-		double[][] a = new double[numberofpoints][degree + 2];
+		int counter = 0;
+		for (int i = 0; i <= degree; i++) {
+			counter += i + 1;
+		}
+
+		double[][] a = new double[numberofpoints][counter];
 		double[][] B = new double[numberofpoints][1];
-		
-		int deg = degree;
-		for (int i=0; i<points.length; i++){
-			B[i][0] = points[i][2];
-			for (int j = deg ; j>=0 ; j--){
-				a[i][deg-j] = Math.pow(points[i][0], j) * Math.pow(points[i][1], deg-j); 
+
+		int pos;
+		for (int j = 0; j < points.length; j++) {
+			B[j][0] = points[j][2];
+			pos = counter-1;
+			for (int grenze = degree; grenze >= 0; grenze--) {
+				for (int i = 0; i <= grenze; i++) {
+					a[j][pos--] = Math.pow(points[j][0], grenze - i) * Math.pow(points[j][1], i);
+				}
 			}
-			a[i][a[0].length-1] = 1;
-			degree--;
 		}
 
 		A = new BlockRealMatrix(a);
@@ -144,7 +149,7 @@ public class LowestSquare implements FitterAlgorithm {
 
 		RealMatrix C = AT.multiply(A);
 
-		C = new LUDecomposition(C).getSolver().getInverse();
+		C = new QRDecomposition(C).getSolver().getInverse();
 
 		RealMatrix D = AT.multiply(b);
 
@@ -154,9 +159,9 @@ public class LowestSquare implements FitterAlgorithm {
 
 		return polynom.getColumn(0);
 	}
-	
+
 	public double[] getPolynom() {
-		if (polynom == null){
+		if (polynom == null) {
 			return new double[0];
 		}
 		return polynom.getColumn(0);
@@ -167,9 +172,9 @@ public class LowestSquare implements FitterAlgorithm {
 	}
 
 	public double[] fit(ArrayList<float[]> pointcloud) {
-		float[][] a= new float[pointcloud.size()][pointcloud.get(0).length];
-		int index=0;
-		for (float[] b : pointcloud){
+		float[][] a = new float[pointcloud.size()][pointcloud.get(0).length];
+		int index = 0;
+		for (float[] b : pointcloud) {
 			a[index++] = b;
 		}
 		return fit(a);

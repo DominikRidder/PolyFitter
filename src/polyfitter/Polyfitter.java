@@ -1,6 +1,7 @@
 package polyfitter;
 
 import ij.gui.Plot;
+
 import javax.vecmath.Point3d;
 
 import java.io.FileReader;
@@ -61,11 +62,6 @@ public class Polyfitter {
 			return false;
 		}
 		return true;
-	}
-
-	public void emptyPointcloud() {
-		pointcloud = null;
-		dimension = 0;
 	}
 
 	public void addPoint(double x) {
@@ -135,8 +131,8 @@ public class Polyfitter {
 			}
 			pointstoadd = new float[pointcloud.size()][2];
 			for (int i = 0; i < pointcloud.size(); i++) {
-				pointstoadd[i][0] = ((Point) (pointcloud.get(i))).x;
-				pointstoadd[i][1] = ((Point) (pointcloud.get(i))).y;
+				pointstoadd[i][0] = ((java.awt.Point) (pointcloud.get(i))).x;
+				pointstoadd[i][1] = ((java.awt.Point) (pointcloud.get(i))).y;
 			}
 			addPoints(pointstoadd);
 		} else if (pointcloud.get(0).getClass().getName()
@@ -293,22 +289,19 @@ public class Polyfitter {
 
 	public String getPolynomRepresentation3d() {
 		String str = "";
+		int j=0;
 		double poly[] = algo.getPolynom();
-		for (int i = 0; i < poly.length - 1; i++) {
-			if (i != 0 && poly[i] >= 0) {
-				str += "+ ";
-			} else if (poly[i] < 0) {
-				str += "- ";
+		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
+			for (int i = 0; i <= grenze; i++) {
+				if (i != 0 && poly[j] >= 0) {
+					str += "+ ";
+				} else if (poly[j] < 0) {
+					str += "- ";
+				}
+				str+= Math.abs(poly[j++])+"x^" + (grenze - i) + "y^" + i+" ";
 			}
-			str += Math.abs(poly[i]) + "x^" + (poly.length - i - 2) + "y^"
-					+ (i) + " ";
 		}
-		if (poly[poly.length - 1] >= 0) {
-			str += "+ ";
-		} else if (poly[poly.length - 1] < 0) {
-			str += "- ";
-		}
-		str += Math.abs(poly[poly.length - 1]);
+		
 		return str;
 	}
 
@@ -324,6 +317,7 @@ public class Polyfitter {
 		str += "\n";
 
 		str += "Polynom: " + getPolynomRepresentation() + "\n";
+		
 		switch (dimension) {
 		case 1:
 			str += "\tx\t|\tp(X)";
@@ -376,10 +370,10 @@ public class Polyfitter {
 		return str;
 	}
 
-	public double getProblem(){
+	public double getProblem() {
 		return algo.getProblem();
 	}
-	
+
 	public double getValue3d(double d, double t) {
 		double[] a = algo.getPolynom();
 		double value = 0;
