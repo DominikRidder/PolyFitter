@@ -1,9 +1,18 @@
 package polyfitter;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.ImageWindow;
 import ij.gui.Plot;
+import ij.plugin.SurfacePlotter;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
 
 import javax.vecmath.Point3d;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,8 +32,118 @@ public class Polyfitter {
 
 	private int dimension;
 
+	public Polyfitter() {
+	}
+
+	/**
+	 * The given file should contain points in the form: x1,...,k1 for max 3
+	 * values per point. Every point should have his own line.
+	 */
+	public Polyfitter(String path) {
+		setPoints(path);
+	}
+
+	/**
+	 * The Object in the ArrayList should be an instance of the class
+	 * java.awt.Point or the class javax.vecmath.Point3d
+	 *
+	 * @param pointcloud
+	 *            ; pointcloud.add(new Point()) or pointcloud.add(new Point3d())
+	 */
+	public Polyfitter(ArrayList<Object> pointcloud) {
+		setPoints(pointcloud);
+	}
+
+	public Polyfitter(float[][] pointcloud) {
+		setPoints(pointcloud);
+	}
+
 	public ArrayList<float[]> getPointcloud() {
 		return pointcloud;
+	}
+
+	public double getValue(double d) {
+		double[] a = algo.getPolynom();
+		double value = 0;
+		for (int i = 0; i < a.length; i++) {
+			value += a[a.length - 1 - i] * Math.pow(d, i);
+		}
+		return value;
+	}
+
+	public double[] getPolynom() {
+		if (pointcloud == null) {
+			System.out.println("At first you have to set some Points.");
+			return new double[0];
+		}
+		defaultAlgorithm("You have to set an algorithm to get a Polynom.");
+		double[] poly;
+		try {
+			poly = algo.getPolynom();
+		} catch (NullPointerException e) {
+			System.out
+					.println("fit() have to be called first. Performing fit methode to set a polynom...");
+			poly = fit();
+		}
+		return poly;
+	}
+
+	public String getPolynomRepresentation() {
+		if (algo == null) {
+			defaultAlgorithm("There have to be a Algorithm to get a Polynomial reprensantation.");
+		}
+		if (dimension == 3) {
+			return getPolynomRepresentation3d();
+		}
+		String str = "";
+		double poly[] = algo.getPolynom();
+		if (poly.length == 0) {
+			System.out
+					.println("You have to perform the fit method before u can get a Polynom.");
+			return "<<not set>>";
+		}
+		for (int i = 0; i < poly.length; i++) {
+			if (i != 0 && poly[i] >= 0) {
+				str += "+ ";
+			} else if (poly[i] < 0) {
+				str += "- ";
+			}
+			str += Math.abs(poly[i]) + "x^" + (poly.length - i - 1) + " ";
+		}
+		return str;
+	}
+
+	public String getPolynomRepresentation3d() {
+		String str = "";
+		int j=0;
+		double poly[] = algo.getPolynom();
+		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
+			for (int i = 0; i <= grenze; i++) {
+				if (poly[j] >= 0) {
+					str += "+ ";
+				} else if (poly[j] < 0) {
+					str += "- ";
+				}
+				str+= Math.abs(poly[j++])+"x^" + (grenze - i) + "y^" + i+" ";
+			}
+		}
+		
+		return str;
+	}
+
+	public double getValue3d(double d, double t) {
+		double[] a = algo.getPolynom();
+		double value = 0;
+		int degree = a.length - 2;
+		for (int i = 0; i < a.length - 1; i++) {
+			value += a[i] * Math.pow(d, degree - i) * Math.pow(t, i);
+		}
+		value += a[a.length - 1];
+		return value;
+	}
+
+	public double getProblem() {
+		return algo.getProblem();
 	}
 
 	public void setAlgorithm(FitterAlgorithm algo) {
@@ -43,25 +162,49 @@ public class Polyfitter {
 		setAlgorithm(new LowestSquare());
 	}
 
-	public Polyfitter() {
+	public void setPoints(String path) {
+		pointcloud = null;
+		dimension = 0;
+		addPoints(path);
 	}
 
-	/**
-	 * The given file should contain points in the form: x1,...,k1 for max 3
-	 * values per point. Every point should have his own line.
-	 */
-	public Polyfitter(String path) {
-		setPoints(path);
+	public void setPoints(ArrayList<Object> pointcloud) {
+		dimension = 0;
+		this.pointcloud = null;
+		addPoints(pointcloud);
 	}
 
-	private boolean dimensionequal(int i) {
-		if (dimension == 0) {
-			dimension = i;
+	public void setPoints(float[][] pointcloud) {
+		this.pointcloud = null;
+		dimension = 0;
+		addPoints(pointcloud);
+	}
+
+	public void setDegree(int i) {
+		defaultAlgorithm("There must be a Algortihmen to set a degree.");
+		algo.setDegree(i);
+	}
+
+	public void setDegreeMax() {
+		if (pointcloud == null) {
+			System.out.println("setDegreeMax failed. Please set the points.");
+			return;
 		}
-		if (dimension != i) {
-			return false;
+		defaultAlgorithm("There must be a Algortihmen to set a degree.");
+		algo.setDegree(pointcloud.size() - 1);
+	}
+
+	public void addPoints(float[][] pointcloud) {
+		if (this.pointcloud == null) {
+			this.pointcloud = new ArrayList<float[]>();
 		}
-		return true;
+		for (float[] a : pointcloud) {
+			this.pointcloud.add(a);
+		}
+	}
+
+	public void addPoints(String path) {
+		readPoints(path);
 	}
 
 	public void addPoint(double x) {
@@ -92,33 +235,6 @@ public class Polyfitter {
 		}
 		float[][] pointstoadd = { { (float) x, (float) y, (float) z } };
 		addPoints(pointstoadd);
-	}
-
-	public void setPoints(String path) {
-		pointcloud = null;
-		dimension = 0;
-		addPoints(path);
-	}
-
-	public void addPoints(String path) {
-		readPoints(path);
-	}
-
-	/**
-	 * The Object in the ArrayList should be an instance of the class
-	 * java.awt.Point or the class javax.vecmath.Point3d
-	 *
-	 * @param pointcloud
-	 *            ; pointcloud.add(new Point()) or pointcloud.add(new Point3d())
-	 */
-	public Polyfitter(ArrayList<Object> pointcloud) {
-		setPoints(pointcloud);
-	}
-
-	public void setPoints(ArrayList<Object> pointcloud) {
-		dimension = 0;
-		this.pointcloud = null;
-		addPoints(pointcloud);
 	}
 
 	public void addPoints(ArrayList<Object> pointcloud) {
@@ -156,25 +272,6 @@ public class Polyfitter {
 		}
 	}
 
-	public Polyfitter(float[][] pointcloud) {
-		setPoints(pointcloud);
-	}
-
-	public void setPoints(float[][] pointcloud) {
-		this.pointcloud = null;
-		dimension = 0;
-		addPoints(pointcloud);
-	}
-
-	public void addPoints(float[][] pointcloud) {
-		if (this.pointcloud == null) {
-			this.pointcloud = new ArrayList<float[]>();
-		}
-		for (float[] a : pointcloud) {
-			this.pointcloud.add(a);
-		}
-	}
-
 	public double[] fit() {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
@@ -189,133 +286,31 @@ public class Polyfitter {
 		return algo.fit(pointcloud);
 	}
 
-	private void readPoints(String path) {
-		ArrayList<float[]> points = new ArrayList<float[]>();
-		try (Scanner sc = new Scanner(new FileReader(path))) {
-
-			while (sc.hasNextLine()) {
-				String str[] = sc.nextLine().split(",");
-				float[] a = new float[str.length];
-				int i = 0;
-
-				for (String s : str) {
-					a[i++] = Float.parseFloat(s);
-				}
-				points.add(a);
-			}
-		} catch (IOException e) {
+	public void plot() {
+		switch (dimension) {
+		case 1:
+			plot1D();
+			break;
+		case 2:
+			plot2D();
+			break;
+		case 3:
+			plot3D();
+			break;
 		}
-		if (pointcloud == null) {
-			pointcloud = new ArrayList<float[]>();
-		}
-		for (float[] a : points) {
-			pointcloud.add(a);
-		}
-		dimensionequal(pointcloud.get(0).length);
-	}
-
-	public void setDegree(int i) {
-		defaultAlgorithm("There must be a Algortihmen to set a degree.");
-		algo.setDegree(i);
-	}
-
-	public void setDegreeMax() {
-		if (pointcloud == null) {
-			System.out.println("setDegreeMax failed. Please set the points.");
-			return;
-		}
-		defaultAlgorithm("There must be a Algortihmen to set a degree.");
-		algo.setDegree(pointcloud.size() - 1);
-	}
-
-	private void defaultAlgorithm(String str) {
-		if (algo == null) {
-			System.out.print(str);
-			System.out.println(" Setting Default algorithm: LowestSquare.");
-			algo = new LowestSquare();
-		}
-	}
-
-	public double[] getPolynom() {
-		if (pointcloud == null) {
-			System.out.println("At first you have to set some Points.");
-			return new double[0];
-		}
-		defaultAlgorithm("You have to set an algorithm to get a Polynom.");
-		double[] poly;
-		try {
-			poly = algo.getPolynom();
-		} catch (NullPointerException e) {
-			System.out
-					.println("fit() have to be called first. Performing fit methode to set a polynom...");
-			poly = fit();
-		}
-		return poly;
-	}
-
-	public double getValue(double d) {
-		double[] a = algo.getPolynom();
-		double value = 0;
-		for (int i = 0; i < a.length; i++) {
-			value += a[a.length - 1 - i] * Math.pow(d, i);
-		}
-		return value;
-	}
-
-	public String getPolynomRepresentation() {
-		if (algo == null) {
-			defaultAlgorithm("There have to be a Algorithm to get a Polynomial reprensantation.");
-		}
-		if (dimension == 3) {
-			return getPolynomRepresentation3d();
-		}
-		String str = "";
-		double poly[] = algo.getPolynom();
-		if (poly.length == 0) {
-			System.out
-					.println("You have to perform the fit method before u can get a Polynom.");
-			return "<<not set>>";
-		}
-		for (int i = 0; i < poly.length; i++) {
-			if (i != 0 && poly[i] >= 0) {
-				str += "+ ";
-			} else if (poly[i] < 0) {
-				str += "- ";
-			}
-			str += Math.abs(poly[i]) + "x^" + (poly.length - i - 1) + " ";
-		}
-		return str;
-	}
-
-	public String getPolynomRepresentation3d() {
-		String str = "";
-		int j=0;
-		double poly[] = algo.getPolynom();
-		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
-			for (int i = 0; i <= grenze; i++) {
-				if (i != 0 && poly[j] >= 0) {
-					str += "+ ";
-				} else if (poly[j] < 0) {
-					str += "- ";
-				}
-				str+= Math.abs(poly[j++])+"x^" + (grenze - i) + "y^" + i+" ";
-			}
-		}
-		
-		return str;
 	}
 
 	@Override
 	public String toString() {
 		String str = "Algorithm: ";
-
+	
 		if (algo == null) {
 			str += "<not set>";
 		} else {
 			str += algo.getClass().getName();
 		}
 		str += "\n";
-
+	
 		str += "Polynom: " + getPolynomRepresentation() + "\n";
 		
 		switch (dimension) {
@@ -370,29 +365,46 @@ public class Polyfitter {
 		return str;
 	}
 
-	public double getProblem() {
-		return algo.getProblem();
-	}
-
-	public double getValue3d(double d, double t) {
-		double[] a = algo.getPolynom();
-		double value = 0;
-		int degree = a.length - 2;
-		for (int i = 0; i < a.length - 1; i++) {
-			value += a[i] * Math.pow(d, degree - i) * Math.pow(t, i);
+	private boolean dimensionequal(int i) {
+		if (dimension == 0) {
+			dimension = i;
 		}
-		value += a[a.length - 1];
-		return value;
+		if (dimension != i) {
+			return false;
+		}
+		return true;
 	}
 
-	public void plot() {
-		switch (dimension) {
-		case 1:
-			plot1D();
-			break;
-		case 2:
-			plot2D();
-			break;
+	private void readPoints(String path) {
+		ArrayList<float[]> points = new ArrayList<float[]>();
+		try (Scanner sc = new Scanner(new FileReader(path))) {
+	
+			while (sc.hasNextLine()) {
+				String str[] = sc.nextLine().split(",");
+				float[] a = new float[str.length];
+				int i = 0;
+	
+				for (String s : str) {
+					a[i++] = Float.parseFloat(s);
+				}
+				points.add(a);
+			}
+		} catch (IOException e) {
+		}
+		if (pointcloud == null) {
+			pointcloud = new ArrayList<float[]>();
+		}
+		for (float[] a : points) {
+			pointcloud.add(a);
+		}
+		dimensionequal(pointcloud.get(0).length);
+	}
+
+	private void defaultAlgorithm(String str) {
+		if (algo == null) {
+			System.out.print(str);
+			System.out.println(" Setting Default algorithm: LowestSquare.");
+			algo = new LowestSquare();
 		}
 	}
 
@@ -474,5 +486,37 @@ public class Polyfitter {
 		}
 		p.draw();
 		p.show();
+	}
+	
+	private void plot3D(){
+		SurfacePlotter sp = new SurfacePlotter();
+		ImageStack is = new ImageStack();
+
+		is.drawSphere(32, 12, 65, 32);
+
+		BufferedImage im = new BufferedImage(100, 100,
+				BufferedImage.TYPE_BYTE_GRAY);
+
+		WritableRaster ra = im.getRaster();
+
+		double[] d = { 0., 0., 0. };
+
+		for (int i = 0; i < 100; i++) {
+			for (int j = 0; j < 100; j++) {
+				d[0] = getValue3d(i/10,j/10);
+				ra.setPixel(i, j, d);
+			}
+		}
+
+		ImageProcessor ip = new ByteProcessor(im);
+		
+		
+		ImagePlus imgplus = new ImagePlus("test" , ip);
+		ImageWindow imgw = new ImageWindow(imgplus);
+		ImageWindow.centerNextImage();
+		
+		
+		WindowManager.addWindow(imgw);
+		sp.run("");
 	}
 }
