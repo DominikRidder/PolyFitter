@@ -137,12 +137,12 @@ public class LowestSquare implements FitterAlgorithm {
 							+ (numberofpoints - 1) + ").");
 			degree = numberofpoints - 1;
 		}
-		if (degree >= numberofpoints) {
-			System.out
-					.println("The degree is to high for this algorithm. Setting highest possible degree (d = "
-							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints - 1;
-		}
+//		if (degree >= numberofpoints) {
+//			System.out
+//					.println("The degree is to high for this algorithm. Setting highest possible degree (d = "
+//							+ (numberofpoints - 1) + ").");
+//			degree = numberofpoints - 1;
+//		}
 	
 		int counter = 0;
 		for (int i = 0; i <= degree; i++) {
@@ -155,10 +155,11 @@ public class LowestSquare implements FitterAlgorithm {
 		int pos;
 		for (int j = 0; j < points.length; j++) {
 			B[j][0] = points[j][2];
-			pos = counter-1;
+			//pos = counter-1;
+			pos = 0;
 			for (int grenze = degree; grenze >= 0; grenze--) {
 				for (int i = 0; i <= grenze; i++) {
-					a[j][pos--] = Math.pow(points[j][0], grenze - i) * Math.pow(points[j][1], i);
+					a[j][pos++] = Math.pow(points[j][0], grenze - i) * Math.pow(points[j][1], i);
 				}
 			}
 		}

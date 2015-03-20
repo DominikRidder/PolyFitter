@@ -7,19 +7,20 @@ public class Main {
 
 		// setting algorithm and degree
 		fitter.setAlgorithmLowestSquare();
-		fitter.setDegree(2);
+		fitter.setDegree(3);
 		
 		// adding points
-		fitter.addPoint(0, 3, 2);
-		fitter.addPoint(1, 9, 5);
-		fitter.addPoint(2, 5, 8);
+		fitter.addPoint(3, 1 , 2);
+		fitter.addPoint(10, 5, 10);
+		fitter.addPoint(20, 40, 20);
+		fitter.addPoint(30, 40, 20);
+		fitter.addPoint(40, 20, 10);
 
 		// performing the fit
 		fitter.fit();
 		// the toString() method is a nice way to look up the fit
 		System.out.println(fitter);
 		// this function makes the fitting visible
-		System.out.println(fitter.getPolynom());
 		fitter.plot();
 	}
 

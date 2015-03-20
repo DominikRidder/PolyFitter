@@ -490,28 +490,61 @@ public class Polyfitter {
 	
 	private void plot3D(){
 		SurfacePlotter sp = new SurfacePlotter();
-		ImageStack is = new ImageStack();
 
-		is.drawSphere(32, 12, 65, 32);
-
-		BufferedImage im = new BufferedImage(100, 100,
+		BufferedImage im = new BufferedImage(500, 400,
 				BufferedImage.TYPE_BYTE_GRAY);
 
 		WritableRaster ra = im.getRaster();
 
 		double[] d = { 0., 0., 0. };
 
-		for (int i = 0; i < 100; i++) {
-			for (int j = 0; j < 100; j++) {
-				d[0] = getValue3d(i/10,j/10);
-				ra.setPixel(i, j, d);
+		double mult = 1;
+		double max = 0;
+		double min = 100000000;
+		
+		
+		for (double i = 0; i < 500; i++) {
+			for (double j = 0; j < 400; j++) {
+				double e = getValue3d(i/10,j/10);
+				if (e < min){
+					min = e;
+				}
+			}
+		}
+		
+//		if (min < 0){
+//			min = -min;
+//		}else{
+//			min = 0;
+//		}
+		min = -min;
+		
+		for (double i = 0; i < 500; i++) {
+			for (double j = 0; j < 400; j++) {
+				double e = getValue3d(i/10,j/10) + min;
+				if (e > max){
+					max = e;
+				}
+			}
+		}
+		
+		mult = 255/max;
+		
+//		if (mult > 1){
+//			mult = 1;
+//		}
+		
+		for (double i = 0; i < 500; i++) {
+			for (double j = 0; j < 400; j++) {
+				d[0] = (getValue3d(i/10,j/10)+min)*mult;
+				ra.setPixel((int)i,(int) j, d);
 			}
 		}
 
 		ImageProcessor ip = new ByteProcessor(im);
 		
 		
-		ImagePlus imgplus = new ImagePlus("test" , ip);
+		ImagePlus imgplus = new ImagePlus("2d data" , ip);
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
 		
