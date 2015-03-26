@@ -28,7 +28,7 @@ public class Polyfitter {
 	/**
 	 * set of points, that the polynom should nearly fit
 	 */
-	private ArrayList<float[]> pointcloud;
+	private ArrayList<Point> pointcloud;
 
 	private int dimension;
 
@@ -58,7 +58,7 @@ public class Polyfitter {
 		setPoints(pointcloud);
 	}
 
-	public ArrayList<float[]> getPointcloud() {
+	public ArrayList<Point> getPointcloud() {
 		return pointcloud;
 	}
 
@@ -185,21 +185,27 @@ public class Polyfitter {
 		algo.setDegree(i);
 	}
 
-	public void setDegreeMax() {
-		if (pointcloud == null) {
-			System.out.println("setDegreeMax failed. Please set the points.");
-			return;
-		}
-		defaultAlgorithm("There must be a Algortihmen to set a degree.");
-		algo.setDegree(pointcloud.size() - 1);
-	}
+//	public void setDegreeMax() {
+//		if (pointcloud == null) {
+//			System.out.println("setDegreeMax failed. Please set the points.");
+//			return;
+//		}
+//		defaultAlgorithm("There must be a Algortihmen to set a degree.");
+//		algo.setDegree(pointcloud.size() - 1);
+//	}
 
 	public void addPoints(float[][] pointcloud) {
 		if (this.pointcloud == null) {
-			this.pointcloud = new ArrayList<float[]>();
+			this.pointcloud = new ArrayList<Point>();
 		}
+		int dim = pointcloud[0].length;
 		for (float[] a : pointcloud) {
-			this.pointcloud.add(a);
+		switch (dim){
+		case 1: this.pointcloud.add(new Point1D(a[0]));break;	
+		case 2: this.pointcloud.add(new Point2D(a[0], a[1]));break;	
+		case 3: this.pointcloud.add(new Point3D(a[0], a[1], a[2]));break;	
+		default:break;
+		}
 		}
 	}
 
@@ -300,7 +306,6 @@ public class Polyfitter {
 		}
 	}
 
-	@Override
 	public String toString() {
 		String str = "Algorithm: ";
 	
@@ -330,9 +335,9 @@ public class Polyfitter {
 		}
 		if (pointcloud != null) {
 			str += "\n";
-			for (float[] pointcloud1 : pointcloud) {
-				for (int j = 0; j < pointcloud.get(0).length; j++) {
-					str += "\t" + pointcloud1[j] + "\t|";
+			for (Point pointcloud1 : pointcloud) {
+				for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
+					str += "\t" + pointcloud1.getElement(j) + "\t|";
 				}
 				str += "\t" + getValue(pointcloud1[0]) + "\n";
 			}
@@ -348,13 +353,13 @@ public class Polyfitter {
 		return str;
 	}
 
-	public String String3d() {
+	private String String3d() {
 		String str = "";
-		for (float[] pointcloud1 : pointcloud) {
-			for (int j = 0; j < pointcloud.get(0).length; j++) {
+		for (Point pointcloud1 : pointcloud) {
+			for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
 				str += "\t" + pointcloud1[j] + "\t|";
 			}
-			str += "\t" + getValue3d(pointcloud1[0], pointcloud1[1]) + "\n";
+			str += "\t" + getValue3d(pointcloud1.getX(), pointcloud1.getY()) + "\n";
 		}
 		str += "Problem: ";
 		if (algo.getProblem() < 0) {

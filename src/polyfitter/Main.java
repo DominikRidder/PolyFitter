@@ -18,8 +18,10 @@ public class Main {
 
 		// performing the fit
 		fitter.fit();
+		
 		// the toString() method is a nice way to look up the fit
 		System.out.println(fitter);
+		
 		// this function makes the fitting visible
 		fitter.plot();
 	}

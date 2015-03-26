@@ -8,5 +8,5 @@ public interface FitterAlgorithm {
 	double getProblem();
 	void setMaxIterations(int i);
 	void setDegree(int d);
-	double[] fit(ArrayList<float[]> pointcloud);
+	double[] fit(ArrayList<Point> pointcloud);
 }

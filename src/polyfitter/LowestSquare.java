@@ -71,7 +71,7 @@ public class LowestSquare implements FitterAlgorithm {
 	public void setMaxIterations(int i) {
 	}
 
-	public double[] fit(ArrayList<float[]> pointcloud) {
+	public double[] fit(ArrayList<Point> pointcloud) {
 		float[][] a = new float[pointcloud.size()][pointcloud.get(0).length];
 		int index = 0;
 		for (float[] b : pointcloud) {
