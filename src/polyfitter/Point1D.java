@@ -17,8 +17,8 @@ public class Point1D implements Point{
 
 	public double getElementbyNumber(int i) {
 		switch(i){
-		case 1: return x;
-		default:return (Double) null;
+		case 0: return x;
+		default:throw new RuntimeException("");
 		}
 	}
 }

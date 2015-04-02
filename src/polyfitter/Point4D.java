@@ -10,11 +10,11 @@ public class Point4D implements Point{
 
 	public double getElementbyNumber(int i) {
 		switch(i){
-		case 1: return x;
-		case 2: return y;
-		case 3: return z;
-		case 4: return s;
-		default:return (Double) null;
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		case 3: return s;
+		default: throw new RuntimeException("");
 		}
 	}
 

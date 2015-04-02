@@ -7,14 +7,14 @@ public class Main {
 
 		// setting algorithm and degree
 		fitter.setAlgorithmLowestSquare();
-		fitter.setDegree(3);
+		fitter.setDegree(2);
 		
 		// adding points
-		fitter.addPoint(3, 1 , 2);
-		fitter.addPoint(10, 5, 10);
-		fitter.addPoint(20, 40, 20);
-		fitter.addPoint(30, 40, 20);
-		fitter.addPoint(40, 20, 10);
+		fitter.addPoint(3, 1 );
+		fitter.addPoint(10, 5);
+		fitter.addPoint(20, 40);
+		fitter.addPoint(30, 40);
+		fitter.addPoint(40, 2);
 
 		// performing the fit
 		fitter.fit();

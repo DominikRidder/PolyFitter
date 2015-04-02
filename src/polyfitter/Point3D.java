@@ -31,10 +31,10 @@ public class Point3D implements Point{
 
 	public double getElementbyNumber(int i) {
 		switch(i){
-		case 1: return x;
-		case 2: return y;
-		case 3: return z;
-		default:return (Double) null;
+		case 0: return x;
+		case 1: return y;
+		case 2: return z;
+		default:throw new RuntimeException("");
 		}
 	}
 }

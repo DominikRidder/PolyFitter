@@ -1,7 +1,6 @@
 package polyfitter;
 
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.gui.Plot;
@@ -115,7 +114,7 @@ public class Polyfitter {
 
 	public String getPolynomRepresentation3d() {
 		String str = "";
-		int j=0;
+		int j = 0;
 		double poly[] = algo.getPolynom();
 		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
 			for (int i = 0; i <= grenze; i++) {
@@ -124,10 +123,11 @@ public class Polyfitter {
 				} else if (poly[j] < 0) {
 					str += "- ";
 				}
-				str+= Math.abs(poly[j++])+"x^" + (grenze - i) + "y^" + i+" ";
+				str += Math.abs(poly[j++]) + "x^" + (grenze - i) + "y^" + i
+						+ " ";
 			}
 		}
-		
+
 		return str;
 	}
 
@@ -185,14 +185,14 @@ public class Polyfitter {
 		algo.setDegree(i);
 	}
 
-//	public void setDegreeMax() {
-//		if (pointcloud == null) {
-//			System.out.println("setDegreeMax failed. Please set the points.");
-//			return;
-//		}
-//		defaultAlgorithm("There must be a Algortihmen to set a degree.");
-//		algo.setDegree(pointcloud.size() - 1);
-//	}
+	// public void setDegreeMax() {
+	// if (pointcloud == null) {
+	// System.out.println("setDegreeMax failed. Please set the points.");
+	// return;
+	// }
+	// defaultAlgorithm("There must be a Algortihmen to set a degree.");
+	// algo.setDegree(pointcloud.size() - 1);
+	// }
 
 	public void addPoints(float[][] pointcloud) {
 		if (this.pointcloud == null) {
@@ -200,12 +200,19 @@ public class Polyfitter {
 		}
 		int dim = pointcloud[0].length;
 		for (float[] a : pointcloud) {
-		switch (dim){
-		case 1: this.pointcloud.add(new Point1D(a[0]));break;	
-		case 2: this.pointcloud.add(new Point2D(a[0], a[1]));break;	
-		case 3: this.pointcloud.add(new Point3D(a[0], a[1], a[2]));break;	
-		default:break;
-		}
+			switch (dim) {
+			case 1:
+				this.pointcloud.add(new Point1D(a[0]));
+				break;
+			case 2:
+				this.pointcloud.add(new Point2D(a[0], a[1]));
+				break;
+			case 3:
+				this.pointcloud.add(new Point3D(a[0], a[1], a[2]));
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -308,16 +315,16 @@ public class Polyfitter {
 
 	public String toString() {
 		String str = "Algorithm: ";
-	
+
 		if (algo == null) {
 			str += "<not set>";
 		} else {
 			str += algo.getClass().getName();
 		}
 		str += "\n";
-	
+
 		str += "Polynom: " + getPolynomRepresentation() + "\n";
-		
+
 		switch (dimension) {
 		case 1:
 			str += "\tx\t|\tp(X)";
@@ -337,9 +344,10 @@ public class Polyfitter {
 			str += "\n";
 			for (Point pointcloud1 : pointcloud) {
 				for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
-					str += "\t" + pointcloud1.getElement(j) + "\t|";
+					str += "\t" + pointcloud1.getElementbyNumber(j) + "\t|";
 				}
-				str += "\t" + getValue(pointcloud1[0]) + "\n";
+				str += "\t" + getValue(pointcloud1.getElementbyNumber(0))
+						+ "\n";
 			}
 		} else {
 			str += "No Points are given\n";
@@ -357,9 +365,11 @@ public class Polyfitter {
 		String str = "";
 		for (Point pointcloud1 : pointcloud) {
 			for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
-				str += "\t" + pointcloud1[j] + "\t|";
+				str += "\t" + pointcloud1.getElementbyNumber(j) + "\t|";
 			}
-			str += "\t" + getValue3d(pointcloud1.getX(), pointcloud1.getY()) + "\n";
+			str += "\t"
+					+ getValue3d(pointcloud1.getElementbyNumber(0),
+							pointcloud1.getElementbyNumber(1)) + "\n";
 		}
 		str += "Problem: ";
 		if (algo.getProblem() < 0) {
@@ -383,12 +393,12 @@ public class Polyfitter {
 	private void readPoints(String path) {
 		ArrayList<float[]> points = new ArrayList<float[]>();
 		try (Scanner sc = new Scanner(new FileReader(path))) {
-	
+
 			while (sc.hasNextLine()) {
 				String str[] = sc.nextLine().split(",");
 				float[] a = new float[str.length];
 				int i = 0;
-	
+
 				for (String s : str) {
 					a[i++] = Float.parseFloat(s);
 				}
@@ -397,12 +407,35 @@ public class Polyfitter {
 		} catch (IOException e) {
 		}
 		if (pointcloud == null) {
-			pointcloud = new ArrayList<float[]>();
+			pointcloud = new ArrayList<Point>();
 		}
 		for (float[] a : points) {
-			pointcloud.add(a);
+			pointcloud.add(floatToPoint(a));
 		}
-		dimensionequal(pointcloud.get(0).length);
+		dimensionequal(pointcloud.get(0).getDimension());
+	}
+
+	private static Point floatToPoint(float[] a) {
+		Point p = null;
+		switch (a.length) {
+		case 1:
+			p = new Point1D(a[0]);
+			break;
+		case 2:
+			p = new Point2D(a[0], a[1]);
+			break;
+		case 3:
+			p = new Point3D(a[0], a[1], a[2]);
+			break;
+		case 4:
+			p = new Point4D();
+			break;
+		default:
+			p = new PointND();
+			break;
+		}
+
+		return p;
 	}
 
 	private void defaultAlgorithm(String str) {
@@ -424,8 +457,8 @@ public class Polyfitter {
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
-		for (float[] a : pointcloud) {
-			x[i] = a[0];
+		for (Point a : pointcloud) {
+			x[i] = a.getElementbyNumber(0);
 			if (x[i] >= xmax) {
 				xmax = (int) x[i] + 2;
 			} else if (x[i] <= xmin) {
@@ -459,15 +492,15 @@ public class Polyfitter {
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
-		for (float[] a : pointcloud) {
-			x[i] = a[0];
+		for (Point a : pointcloud) {
+			x[i] = a.getElementbyNumber(0);
 			if (x[i] + 2 >= xmax) {
 				xmax = (int) x[i] + 2;
 			}
 			if (x[i] - 1 <= xmin) {
 				xmin = (int) x[i] - 1;
 			}
-			y[i] = a[1];
+			y[i] = a.getElementbyNumber(1);
 			if (y[i] + 2 >= ymax) {
 				ymax = (int) y[i] + 2;
 			}
@@ -492,8 +525,8 @@ public class Polyfitter {
 		p.draw();
 		p.show();
 	}
-	
-	private void plot3D(){
+
+	private void plot3D() {
 		SurfacePlotter sp = new SurfacePlotter();
 
 		BufferedImage im = new BufferedImage(500, 400,
@@ -506,54 +539,51 @@ public class Polyfitter {
 		double mult = 1;
 		double max = 0;
 		double min = 100000000;
-		
-		
+
 		for (double i = 0; i < 500; i++) {
 			for (double j = 0; j < 400; j++) {
-				double e = getValue3d(i/10,j/10);
-				if (e < min){
+				double e = getValue3d(i / 10, j / 10);
+				if (e < min) {
 					min = e;
 				}
 			}
 		}
-		
-//		if (min < 0){
-//			min = -min;
-//		}else{
-//			min = 0;
-//		}
+
+		// if (min < 0){
+		// min = -min;
+		// }else{
+		// min = 0;
+		// }
 		min = -min;
-		
+
 		for (double i = 0; i < 500; i++) {
 			for (double j = 0; j < 400; j++) {
-				double e = getValue3d(i/10,j/10) + min;
-				if (e > max){
+				double e = getValue3d(i / 10, j / 10) + min;
+				if (e > max) {
 					max = e;
 				}
 			}
 		}
-		
-		mult = 255/max;
-		
-//		if (mult > 1){
-//			mult = 1;
-//		}
-		
+
+		mult = 255 / max;
+
+		// if (mult > 1){
+		// mult = 1;
+		// }
+
 		for (double i = 0; i < 500; i++) {
 			for (double j = 0; j < 400; j++) {
-				d[0] = (getValue3d(i/10,j/10)+min)*mult;
-				ra.setPixel((int)i,(int) j, d);
+				d[0] = (getValue3d(i / 10, j / 10) + min) * mult;
+				ra.setPixel((int) i, (int) j, d);
 			}
 		}
 
 		ImageProcessor ip = new ByteProcessor(im);
-		
-		
-		ImagePlus imgplus = new ImagePlus("2d data" , ip);
+
+		ImagePlus imgplus = new ImagePlus("2d data", ip);
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
-		
-		
+
 		WindowManager.addWindow(imgw);
 		sp.run("");
 	}

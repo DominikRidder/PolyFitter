@@ -3,7 +3,6 @@ package polyfitter;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -72,9 +71,13 @@ public class LowestSquare implements FitterAlgorithm {
 	}
 
 	public double[] fit(ArrayList<Point> pointcloud) {
-		float[][] a = new float[pointcloud.size()][pointcloud.get(0).length];
+		float[][] a = new float[pointcloud.size()][pointcloud.get(0).getDimension()];
 		int index = 0;
-		for (float[] b : pointcloud) {
+		for (Point c : pointcloud) {
+			float [] b = new float[c.getDimension()];
+			for (int i=0; i<c.getDimension(); i++){
+				b[i] = (float) c.getElementbyNumber(i);
+			}
 			a[index++] = b;
 		}
 		return fit(a);
