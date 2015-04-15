@@ -1,6 +1,7 @@
 package polyfitter;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 public interface FitterAlgorithm {
 	int getDegree();

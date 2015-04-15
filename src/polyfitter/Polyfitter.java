@@ -16,6 +16,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Vector;
 
 public class Polyfitter {
 
@@ -30,7 +31,9 @@ public class Polyfitter {
 	private ArrayList<Point> pointcloud;
 
 	private int dimension;
-
+	
+	private Vector<Integer> v;
+	
 	public Polyfitter() {
 	}
 
@@ -60,8 +63,16 @@ public class Polyfitter {
 	public ArrayList<Point> getPointcloud() {
 		return pointcloud;
 	}
-
-	public double getValue(double d) {
+	
+	public double getValue(Point p){
+		switch(p.getDimension()){
+		case 1: return getValue(p.getElementbyNumber(0));
+		case 2: return getValue3d(p.getElementbyNumber(0), p.getElementbyNumber(1));
+		default: return 0;
+		}
+	}
+	
+	private double getValue(double d) {
 		double[] a = algo.getPolynom();
 		double value = 0;
 		for (int i = 0; i < a.length; i++) {
@@ -130,15 +141,16 @@ public class Polyfitter {
 
 		return str;
 	}
-
-	public double getValue3d(double d, double t) {
-		double[] a = algo.getPolynom();
+	
+	private double getValue3d(double d, double t) {
 		double value = 0;
-		int degree = a.length - 2;
-		for (int i = 0; i < a.length - 1; i++) {
-			value += a[i] * Math.pow(d, degree - i) * Math.pow(t, i);
+		int j = 0;
+		double poly[] = algo.getPolynom();
+		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
+			for (int i = 0; i <= grenze; i++) {
+				value += poly[j++] * Math.pow(d, (grenze - i)) * Math.pow(t, i);
+			}
 		}
-		value += a[a.length - 1];
 		return value;
 	}
 
@@ -184,15 +196,6 @@ public class Polyfitter {
 		defaultAlgorithm("There must be a Algortihmen to set a degree.");
 		algo.setDegree(i);
 	}
-
-	// public void setDegreeMax() {
-	// if (pointcloud == null) {
-	// System.out.println("setDegreeMax failed. Please set the points.");
-	// return;
-	// }
-	// defaultAlgorithm("There must be a Algortihmen to set a degree.");
-	// algo.setDegree(pointcloud.size() - 1);
-	// }
 
 	public void addPoints(float[][] pointcloud) {
 		if (this.pointcloud == null) {
@@ -285,6 +288,10 @@ public class Polyfitter {
 		}
 	}
 
+	public void removePoints(){
+		pointcloud = new ArrayList<>();
+	}
+	
 	public double[] fit() {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
@@ -298,8 +305,42 @@ public class Polyfitter {
 		}
 		return algo.fit(pointcloud);
 	}
+	
+	public double[] fit(Vector<Integer> v){
+		if (pointcloud == null) {
+			System.out.println("Fitting failed. There are no Points to fit.");
+			return new double[0];
+		}
+		defaultAlgorithm("There must be a algorithm to perform the fit.");
+		if (dimension == 1 && algo.getDegree() != 0) {
+			System.out
+					.println("Setting degree = 0, because the fit would not make sense with higher degree right here.");
+			algo.setDegree(0);
+		}
+		
+		this.v = v;
+		
+		return algo.fit(getPointsToFit());
+	}
 
+	private ArrayList<Point> getPointsToFit(){
+		Integer[] a = new Integer[0];
+		ArrayList<Point> tofit = new ArrayList<Point>();
+		for (Point p: pointcloud){
+			PointND pnd = new PointND();
+			for (Integer att: v.toArray(a)){
+				pnd.addElement(p.getElementbyNumber(att));
+			}
+			tofit.add(pnd);
+		}
+		return tofit;
+	}
+	
 	public void plot() {
+		if (v != null){
+			plothelp(true);
+			return;
+		}
 		switch (dimension) {
 		case 1:
 			plot1D();
@@ -308,12 +349,33 @@ public class Polyfitter {
 			plot2D();
 			break;
 		case 3:
-			plot3D();
+			plot3D(true);
 			break;
 		}
 	}
+	
+	private void plothelp(boolean b) {
+		Vector<Integer> copyv = v;
+		ArrayList<Point> copyp = pointcloud; 
+		int copyd = dimension;
+		
+		dimension = v.size();
+		pointcloud = getPointsToFit();
+		v = null;
+		
+		plot(b);
+		
+		v = copyv;
+		pointcloud = copyp;
+		dimension = copyd;
+	}
 
 	public String toString() {
+		
+		if (v != null){
+			return toStringhelp();
+		}
+		
 		String str = "Algorithm: ";
 
 		if (algo == null) {
@@ -358,6 +420,24 @@ public class Polyfitter {
 		} else {
 			str += algo.getProblem();
 		}
+		return str;
+	}
+
+	private String toStringhelp() {
+		Vector<Integer> copyv = v;
+		ArrayList<Point> copyp = pointcloud; 
+		int copyd = dimension;
+		
+		dimension = v.size();
+		pointcloud = getPointsToFit();
+		v = null;
+		
+		String str = this.toString();
+		
+		v = copyv;
+		pointcloud = copyp;
+		dimension = copyd;
+		
 		return str;
 	}
 
@@ -526,7 +606,7 @@ public class Polyfitter {
 		p.show();
 	}
 
-	private void plot3D() {
+	private void plot3D(boolean d3) {
 		SurfacePlotter sp = new SurfacePlotter();
 
 		BufferedImage im = new BufferedImage(500, 400,
@@ -584,7 +664,39 @@ public class Polyfitter {
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
 
+		if (d3 == true){
 		WindowManager.addWindow(imgw);
 		sp.run("");
+		}
+	}
+
+	public void addPoint(Point point) {
+		if (point.getDimension() == 0){
+			System.out.println("You cannot put an empty point into the pointcloud.");
+			return;
+		}
+		if (pointcloud == null){
+			dimension = point.getDimension();
+			pointcloud = new ArrayList<Point>();
+		}
+		pointcloud.add(point);
+	}
+
+	public void plot(boolean plot3d) {
+		if (v != null){
+			plothelp(plot3d);
+			return;
+		}
+		switch (dimension) {
+		case 1:
+			plot1D();
+			break;
+		case 2:
+			plot2D();
+			break;
+		case 3:
+			plot3D(plot3d);
+			break;
+		}
 	}
 }
