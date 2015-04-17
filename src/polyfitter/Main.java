@@ -9,7 +9,7 @@ public class Main {
 		
 		// setting algorithm and degree
 		fitter.setAlgorithmLowestSquare();
-		fitter.setDegree(2);
+		fitter.setDegree(30);
 		
 		// adding points
 		fitter.addPoint(create4DPoint(10, 20, 30, 40));
@@ -23,7 +23,10 @@ public class Main {
 		Vector<Integer> choice = new Vector<Integer>();
 		choice.add(0);
 		choice.add(1);
-		choice.add(2);
+//		choice.add(2);
+
+		fitter.optimazationOptions.makeOptimazationVisible();
+		fitter.optimazationOptions.chooseBestDegree();
 		
 		// performing the fit
 		fitter.fit(choice);
@@ -33,7 +36,7 @@ public class Main {
 		
 		// this function makes the fitting visible
 //		fitter.plot();
-		fitter.plot(false);
+		fitter.plot(true);
 	}
 	
 	public static PointND create4DPoint(double x1, double x2, double x3, double x4){

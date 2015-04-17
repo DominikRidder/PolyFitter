@@ -8,8 +8,13 @@ import ij.plugin.SurfacePlotter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
+import javax.swing.JFrame;
+import javax.swing.JTextField;
 import javax.vecmath.Point3d;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.FileReader;
@@ -31,9 +36,13 @@ public class Polyfitter {
 	private ArrayList<Point> pointcloud;
 
 	private int dimension;
-	
+
 	private Vector<Integer> v;
-	
+
+	private ArrayList<Integer> args = new ArrayList<Integer>();
+
+	public final Optimazation optimazationOptions = new Optimazation(args);
+
 	public Polyfitter() {
 	}
 
@@ -63,15 +72,18 @@ public class Polyfitter {
 	public ArrayList<Point> getPointcloud() {
 		return pointcloud;
 	}
-	
-	public double getValue(Point p){
-		switch(p.getDimension()){
-		case 1: return getValue(p.getElementbyNumber(0));
-		case 2: return getValue3d(p.getElementbyNumber(0), p.getElementbyNumber(1));
-		default: return 0;
+
+	public double getValue(Point p) {
+		switch (p.getDimension()) {
+		case 1:
+			return getValue(p.getElementbyNumber(0));
+		case 2:
+			return getValue3d(p.getElementbyNumber(0), p.getElementbyNumber(1));
+		default:
+			return 0;
 		}
 	}
-	
+
 	private double getValue(double d) {
 		double[] a = algo.getPolynom();
 		double value = 0;
@@ -141,7 +153,7 @@ public class Polyfitter {
 
 		return str;
 	}
-	
+
 	private double getValue3d(double d, double t) {
 		double value = 0;
 		int j = 0;
@@ -288,10 +300,10 @@ public class Polyfitter {
 		}
 	}
 
-	public void removePoints(){
+	public void removePoints() {
 		pointcloud = new ArrayList<>();
 	}
-	
+
 	public double[] fit() {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
@@ -303,10 +315,10 @@ public class Polyfitter {
 					.println("Setting degree = 0, because the fit would not make sense with higher degree right here.");
 			algo.setDegree(0);
 		}
-		return algo.fit(pointcloud);
+		return useOptimasation(pointcloud);
 	}
-	
-	public double[] fit(Vector<Integer> v){
+
+	public double[] fit(Vector<Integer> v) {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
 			return new double[0];
@@ -317,27 +329,76 @@ public class Polyfitter {
 					.println("Setting degree = 0, because the fit would not make sense with higher degree right here.");
 			algo.setDegree(0);
 		}
-		
+
 		this.v = v;
-		
-		return algo.fit(getPointsToFit());
+
+		return useOptimasation(getPointsToFit());
 	}
 
-	private ArrayList<Point> getPointsToFit(){
+	private double[] useOptimasation(ArrayList<Point> pointcloud) {
+		boolean ausgabe = args.contains(3);
+		if (args.contains(2)) {
+			int stepsize = 10;
+			int degree = algo.getDegree();
+			algo.fit(pointcloud);
+			double problem1 = algo.getProblem();
+			while (true) {
+				if (degree-stepsize >= 0) {
+					algo.setDegree(degree - stepsize);
+					algo.fit(pointcloud);
+					double problem2 = algo.getProblem();
+					if (problem2 < problem1) {
+						degree -= stepsize;
+						problem1 = problem2;
+						if (ausgabe) {
+							System.out.println("Reducing degree from "
+									+ (degree + stepsize) + " to " + degree);
+						}
+						continue;
+					}
+				}
+				algo.setDegree(degree+stepsize);
+				algo.fit(pointcloud);
+				double problem2 = algo.getProblem();
+				if (problem2 < problem1) {
+					degree +=stepsize;
+					problem1 = problem2;
+					if (ausgabe) {
+						System.out.println("Increasing degree from "
+								+ (degree - stepsize) + " to " + degree);
+					}
+					continue;
+				}
+				if (stepsize > 1){
+					stepsize--;
+					continue;
+				}
+				if (ausgabe) {
+					System.out.println("best degree found: degree = " + degree);
+				}
+				algo.setDegree(degree);
+				break;
+			}
+
+		}
+		return algo.fit(pointcloud);
+	}
+
+	private ArrayList<Point> getPointsToFit() {
 		Integer[] a = new Integer[0];
 		ArrayList<Point> tofit = new ArrayList<Point>();
-		for (Point p: pointcloud){
+		for (Point p : pointcloud) {
 			PointND pnd = new PointND();
-			for (Integer att: v.toArray(a)){
+			for (Integer att : v.toArray(a)) {
 				pnd.addElement(p.getElementbyNumber(att));
 			}
 			tofit.add(pnd);
 		}
 		return tofit;
 	}
-	
+
 	public void plot() {
-		if (v != null){
+		if (v != null) {
 			plothelp(true);
 			return;
 		}
@@ -353,29 +414,29 @@ public class Polyfitter {
 			break;
 		}
 	}
-	
+
 	private void plothelp(boolean b) {
 		Vector<Integer> copyv = v;
-		ArrayList<Point> copyp = pointcloud; 
+		ArrayList<Point> copyp = pointcloud;
 		int copyd = dimension;
-		
+
 		dimension = v.size();
 		pointcloud = getPointsToFit();
 		v = null;
-		
+
 		plot(b);
-		
+
 		v = copyv;
 		pointcloud = copyp;
 		dimension = copyd;
 	}
 
 	public String toString() {
-		
-		if (v != null){
+
+		if (v != null) {
 			return toStringhelp();
 		}
-		
+
 		String str = "Algorithm: ";
 
 		if (algo == null) {
@@ -425,19 +486,19 @@ public class Polyfitter {
 
 	private String toStringhelp() {
 		Vector<Integer> copyv = v;
-		ArrayList<Point> copyp = pointcloud; 
+		ArrayList<Point> copyp = pointcloud;
 		int copyd = dimension;
-		
+
 		dimension = v.size();
 		pointcloud = getPointsToFit();
 		v = null;
-		
+
 		String str = this.toString();
-		
+
 		v = copyv;
 		pointcloud = copyp;
 		dimension = copyd;
-		
+
 		return str;
 	}
 
@@ -620,8 +681,8 @@ public class Polyfitter {
 		double max = 0;
 		double min = 100000000;
 
-		for (double i = 0; i < 500; i++) {
-			for (double j = 0; j < 400; j++) {
+		for (double j = 0; j < 400; j++) {
+			for (double i = 0; i < 500; i++) {
 				double e = getValue3d(i / 10, j / 10);
 				if (e < min) {
 					min = e;
@@ -629,15 +690,10 @@ public class Polyfitter {
 			}
 		}
 
-		// if (min < 0){
-		// min = -min;
-		// }else{
-		// min = 0;
-		// }
 		min = -min;
 
-		for (double i = 0; i < 500; i++) {
-			for (double j = 0; j < 400; j++) {
+		for (double j = 0; j < 400; j++) {
+			for (double i = 0; i < 500; i++) {
 				double e = getValue3d(i / 10, j / 10) + min;
 				if (e > max) {
 					max = e;
@@ -647,12 +703,8 @@ public class Polyfitter {
 
 		mult = 255 / max;
 
-		// if (mult > 1){
-		// mult = 1;
-		// }
-
-		for (double i = 0; i < 500; i++) {
-			for (double j = 0; j < 400; j++) {
+		for (double j = 0; j < 400; j++) {
+			for (double i = 0; i < 500; i++) {
 				d[0] = (getValue3d(i / 10, j / 10) + min) * mult;
 				ra.setPixel((int) i, (int) j, d);
 			}
@@ -663,19 +715,60 @@ public class Polyfitter {
 		ImagePlus imgplus = new ImagePlus("2d data", ip);
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
+		JTextField jt = new JTextField("swag");
+		jt.setEditable(false);
+		Window w = ImageWindow.getWindows()[0];
+		w.setSize(new Dimension((int) w.getSize().getWidth(), (int) w.getSize()
+				.getHeight() + 50));
+		w.setMaximumSize(w.getSize());
+		w.setMinimumSize(w.getSize());
+		jt.setSize(new Dimension(500, 500));
+		w.add(jt);
 
-		if (d3 == true){
-		WindowManager.addWindow(imgw);
-		sp.run("");
+		if (d3 == true) {
+			WindowManager.addWindow(imgw);
+			sp.run("");
 		}
+
+		java.awt.Point p = null;
+		while (w.isActive()) {
+			try {
+				if (p != imgw.getMousePosition()) {
+					jt.setSize(jt.getPreferredSize());
+					p = imgw.getMousePosition();
+					Dimension d1 = imgw.getSize();
+					double x = ((p.getX() - (d1.getWidth() - 500) / 2)) / 10;
+					double y = ((p.getY() - (d1.getHeight() - 387) / 2)) / 10;
+					if (x < 0) {
+						x = 0;
+					}
+					if (y < 0) {
+						y = 0;
+					}
+					if (x > 50) {
+						x = 50;
+					}
+					if (y > 40) {
+						y = 40;
+					}
+					jt.setText("x = " + x + "/ y = " + y + "/ z = "
+							+ getValue3d(x, y));
+				}
+				Thread.sleep(500);
+			} catch (NullPointerException | InterruptedException e) {
+
+			}
+		}
+
 	}
 
 	public void addPoint(Point point) {
-		if (point.getDimension() == 0){
-			System.out.println("You cannot put an empty point into the pointcloud.");
+		if (point.getDimension() == 0) {
+			System.out
+					.println("You cannot put an empty point into the pointcloud.");
 			return;
 		}
-		if (pointcloud == null){
+		if (pointcloud == null) {
 			dimension = point.getDimension();
 			pointcloud = new ArrayList<Point>();
 		}
@@ -683,7 +776,7 @@ public class Polyfitter {
 	}
 
 	public void plot(boolean plot3d) {
-		if (v != null){
+		if (v != null) {
 			plothelp(plot3d);
 			return;
 		}
@@ -697,6 +790,26 @@ public class Polyfitter {
 		case 3:
 			plot3D(plot3d);
 			break;
+		}
+	}
+
+	public class Optimazation {
+		private ArrayList<Integer> arg = new ArrayList<>();
+
+		public Optimazation(ArrayList<Integer> listener) {
+			arg = listener;
+		}
+
+		public void canRemovePoints() {
+			arg.add(1);
+		}
+
+		public void chooseBestDegree() {
+			arg.add(2);
+		}
+
+		public void makeOptimazationVisible() {
+			arg.add(3);
 		}
 	}
 }
