@@ -25,8 +25,9 @@ public class Main {
 		choice.add(1);
 //		choice.add(2);
 
-		fitter.optimazationOptions.makeOptimazationVisible();
-		fitter.optimazationOptions.chooseBestDegree();
+		fitter.optimazationOptions.setOptimizationOutPut(true);
+		fitter.optimazationOptions.setOptimizationOutPut(false);
+		fitter.optimazationOptions.searchBetterDegree();
 		
 		// performing the fit
 		fitter.fit(choice);

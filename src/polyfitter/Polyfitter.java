@@ -336,50 +336,62 @@ public class Polyfitter {
 	}
 
 	private double[] useOptimasation(ArrayList<Point> pointcloud) {
-		boolean ausgabe = args.contains(3);
-		if (args.contains(2)) {
-			int stepsize = 10;
-			int degree = algo.getDegree();
-			algo.fit(pointcloud);
-			double problem1 = algo.getProblem();
-			while (true) {
-				if (degree-stepsize >= 0) {
-					algo.setDegree(degree - stepsize);
+		boolean ausgabe = false;
+		for (int i : args) {
+			switch (i) {
+			case 2:
+				int stepsize = 10;
+				int degree = algo.getDegree();
+				algo.fit(pointcloud);
+				double problem1 = algo.getProblem();
+				while (true) {
+					if (degree - stepsize >= 0) {
+						algo.setDegree(degree - stepsize);
+						algo.fit(pointcloud);
+						double problem2 = algo.getProblem();
+						if (problem2 < problem1) {
+							degree -= stepsize;
+							problem1 = problem2;
+							if (ausgabe) {
+								System.out
+										.println("Reducing degree from "
+												+ (degree + stepsize) + " to "
+												+ degree);
+							}
+							continue;
+						}
+					}
+					algo.setDegree(degree + stepsize);
 					algo.fit(pointcloud);
 					double problem2 = algo.getProblem();
 					if (problem2 < problem1) {
-						degree -= stepsize;
+						degree += stepsize;
 						problem1 = problem2;
 						if (ausgabe) {
-							System.out.println("Reducing degree from "
-									+ (degree + stepsize) + " to " + degree);
+							System.out.println("Increasing degree from "
+									+ (degree - stepsize) + " to " + degree);
 						}
 						continue;
 					}
-				}
-				algo.setDegree(degree+stepsize);
-				algo.fit(pointcloud);
-				double problem2 = algo.getProblem();
-				if (problem2 < problem1) {
-					degree +=stepsize;
-					problem1 = problem2;
-					if (ausgabe) {
-						System.out.println("Increasing degree from "
-								+ (degree - stepsize) + " to " + degree);
+					if (stepsize > 1) {
+						stepsize--;
+						continue;
 					}
-					continue;
+					if (ausgabe) {
+						System.out.println("best degree found: degree = "
+								+ degree);
+					}
+					algo.setDegree(degree);
+					break;
 				}
-				if (stepsize > 1){
-					stepsize--;
-					continue;
-				}
-				if (ausgabe) {
-					System.out.println("best degree found: degree = " + degree);
-				}
-				algo.setDegree(degree);
+				break;
+			case 3:
+				ausgabe = true;
+				break;
+			case 4:
+				ausgabe = false;
 				break;
 			}
-
 		}
 		return algo.fit(pointcloud);
 	}
@@ -804,12 +816,15 @@ public class Polyfitter {
 			arg.add(1);
 		}
 
-		public void chooseBestDegree() {
+		public void searchBetterDegree() {
 			arg.add(2);
 		}
 
-		public void makeOptimazationVisible() {
-			arg.add(3);
+		public void setOptimizationOutPut(Boolean b) {
+			if (b)
+				arg.add(3);
+			else
+				arg.add(4);
 		}
 	}
 }
