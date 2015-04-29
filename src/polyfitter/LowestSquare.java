@@ -194,12 +194,6 @@ public class LowestSquare implements FitterAlgorithm {
 							+ (numberofpoints - 1) + ").");
 			degree = numberofpoints - 1;
 		}
-		// if (degree >= numberofpoints) {
-		// System.out
-		// .println("The degree is to high for this algorithm. Setting highest possible degree (d = "
-		// + (numberofpoints - 1) + ").");
-		// degree = numberofpoints - 1;
-		// }
 
 		int counter = 0;
 		for (int x = degree; x >= 0; x--) {

@@ -28,9 +28,9 @@ public class Main {
 
 		// the order of the Options matter
 		fitter.optimazationOptions.setOptimizationOutPut(true);
-		fitter.optimazationOptions.canRemoveLastPoint(100, 1000); // max removeable Points = 100 / break for problem <=1000
+		fitter.optimazationOptions.canRemoveLastPoint(100, 1000); // max removeable Points = 100 / break for problem <1000
 //		fitter.optimazationOptions.setOptimizationOutPut(false);
-		fitter.optimazationOptions.searchBetterDegree(10,0); // max degree change = 30 / break for problem <=0
+		fitter.optimazationOptions.searchBetterDegree(10,0); // max degree change = 10 / break for problem <0
 		
 		// performing the fit
 		fitter.fit(choice);

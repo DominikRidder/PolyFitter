@@ -37,14 +37,29 @@ public class Polyfitter {
 	 */
 	private ArrayList<Point> pointcloud;
 
+	/**
+	 * to check if new Points match up to the old one
+	 */
 	private int dimension;
 
+	/**
+	 * with the vector v, the user can choose what is x,y and z
+	 */
 	private Vector<Integer> v;
 
+	/**
+	 * Optimazation command list
+	 */
 	private ArrayList<Optimize> optimize = new ArrayList<Optimize>();
 
+	/**
+	 * The optimazationOption can be used to find a smaller Problem.
+	 */
 	public final Optimazation optimazationOptions = new Optimazation(optimize);
 
+	/**
+	 * Default Constructer (doing nothing)
+	 */
 	public Polyfitter() {
 	}
 
@@ -57,17 +72,11 @@ public class Polyfitter {
 	}
 
 	/**
-	 * The Object in the ArrayList should be an instance of the class
-	 * java.awt.Point or the class javax.vecmath.Point3d
 	 *
 	 * @param pointcloud
-	 *            ; pointcloud.add(new Point()) or pointcloud.add(new Point3d())
+	 * 
 	 */
 	public Polyfitter(ArrayList<Object> pointcloud) {
-		setPoints(pointcloud);
-	}
-
-	public Polyfitter(float[][] pointcloud) {
 		setPoints(pointcloud);
 	}
 
@@ -75,6 +84,12 @@ public class Polyfitter {
 		return pointcloud;
 	}
 
+	/**
+	 * Use this method, if you need a value of the polynom to a given Point p.
+	 * 
+	 * @param p
+	 * @return
+	 */
 	public double getValue(Point p) {
 		switch (p.getDimension()) {
 		case 1:
@@ -86,6 +101,12 @@ public class Polyfitter {
 		}
 	}
 
+	/**
+	 * Private method to get the Value of an 2D function.
+	 * 
+	 * @param d
+	 * @return
+	 */
 	private double getValue(double d) {
 		double[] a = algo.getPolynom();
 		double value = 0;
@@ -95,6 +116,11 @@ public class Polyfitter {
 		return value;
 	}
 
+	/**
+	 * Returning the Polynom as an array.
+	 * 
+	 * @return
+	 */
 	public double[] getPolynom() {
 		if (pointcloud == null) {
 			System.out.println("At first you have to set some Points.");
@@ -112,6 +138,12 @@ public class Polyfitter {
 		return poly;
 	}
 
+	/**
+	 * This Method can be used to lookup how the polynom is builded. For
+	 * example: "1.4324x^2 + 483x^1 ...."
+	 * 
+	 * @return the String Representation of the Polynom
+	 */
 	public String getPolynomRepresentation() {
 		if (algo == null) {
 			defaultAlgorithm("There have to be a Algorithm to get a Polynomial reprensantation.");
@@ -137,7 +169,12 @@ public class Polyfitter {
 		return str;
 	}
 
-	public String getPolynomRepresentation3d() {
+	/**
+	 * This method returning the 3dPolynomRepresentation as a String.
+	 * 
+	 * @return
+	 */
+	private String getPolynomRepresentation3d() {
 		String str = "";
 		int j = 0;
 		double poly[] = algo.getPolynom();
@@ -156,6 +193,14 @@ public class Polyfitter {
 		return str;
 	}
 
+	/**
+	 * This method returning the Value of a 3d function to 2 given values x and
+	 * y.
+	 * 
+	 * @param d
+	 * @param t
+	 * @return
+	 */
 	private double getValue3d(double d, double t) {
 		double value = 0;
 		int j = 0;
@@ -168,10 +213,21 @@ public class Polyfitter {
 		return value;
 	}
 
+	/**
+	 * Returning the absolute Sum of the y(or z) evaluation.
+	 * 
+	 * @return
+	 */
 	public double getProblem() {
 		return algo.getProblem();
 	}
 
+	/**
+	 * This method is used, to set up the Algorithm, which should find a
+	 * function to the given data.
+	 * 
+	 * @param algo
+	 */
 	public void setAlgorithm(FitterAlgorithm algo) {
 		if (this.algo != null) {
 			System.out
@@ -184,6 +240,11 @@ public class Polyfitter {
 		}
 	}
 
+	/**
+	 * This Method setting the used Algorithm to the LowestSquare Algorithm.
+	 * Instead of this method, you could also write fitter.setAlgorithm(new
+	 * LowestSquare());
+	 */
 	public void setAlgorithmLowestSquare() {
 		setAlgorithm(new LowestSquare());
 	}
@@ -302,10 +363,19 @@ public class Polyfitter {
 		}
 	}
 
+	/**
+	 * This Method removing all points from the pointcloud, with the method
+	 * "arraylist.clear".
+	 */
 	public void removePoints() {
 		pointcloud.clear();
 	}
 
+	/**
+	 * This Method performing the fit.
+	 * 
+	 * @return thepolynom as an array
+	 */
 	public double[] fit() {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
@@ -320,6 +390,13 @@ public class Polyfitter {
 		return useOptimasation(pointcloud);
 	}
 
+	/**
+	 * With the Vector v, you can choose which elements of the Points will be
+	 * used to perform the fit.
+	 * 
+	 * @param v
+	 * @return
+	 */
 	public double[] fit(Vector<Integer> v) {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
@@ -337,6 +414,11 @@ public class Polyfitter {
 		return fithelp();
 	}
 
+	/**
+	 * A Little Helpfull method to fit to a given Vector.
+	 * 
+	 * @return
+	 */
 	private double[] fithelp() {
 		Vector<Integer> copyv = v;
 		ArrayList<Point> copyp = pointcloud;
@@ -349,8 +431,8 @@ public class Polyfitter {
 		double pol[] = this.fit();
 
 		v = copyv;
-		while (copyp.size() > pointcloud.size()){
-			copyp.remove(copyp.size()-1);
+		while (copyp.size() > pointcloud.size()) {
+			copyp.remove(copyp.size() - 1);
 		}
 		pointcloud = copyp;
 		dimension = copyd;
@@ -358,6 +440,12 @@ public class Polyfitter {
 		return pol;
 	}
 
+	/**
+	 * This Method perform the OptimazationOptions.
+	 * 
+	 * @param pointcloud
+	 * @return
+	 */
 	private double[] useOptimasation(ArrayList<Point> pointcloud) {
 		boolean ausgabe = false;
 		for (Optimize o : optimize) {
@@ -376,6 +464,15 @@ public class Polyfitter {
 		return algo.fit(pointcloud);
 	}
 
+	/**
+	 * This Method removes the last point of the pointcloud over and over again,
+	 * as long the problem of the fit getting smaller or only 2 Points left or
+	 * the problem is smaller than the given prob.
+	 * 
+	 * @param arg
+	 * @param ausgabe
+	 * @param prob
+	 */
 	private void searchbetterPoints(int arg, boolean ausgabe, double prob) {
 		if (ausgabe) {
 			System.out.println("Starting searchbetterPoints...");
@@ -414,6 +511,14 @@ public class Polyfitter {
 				+ " Point(s).");
 	}
 
+	/**
+	 * This Method trys to find a degree for which the Problem of a fit is lower
+	 * than it is at the moment.
+	 * 
+	 * @param arg
+	 * @param ausgabe
+	 * @param prob
+	 */
 	private void searchbetterdegree(int arg, boolean ausgabe, double prob) {
 		if (ausgabe) {
 			System.out.println("Starting searchbetterDegree...");
@@ -469,6 +574,12 @@ public class Polyfitter {
 		algo.setDegree(degree);
 	}
 
+	/**
+	 * Returning a new Pointcloud, which only inhabitate the choosen elements,
+	 * of the given Vector v.
+	 * 
+	 * @return
+	 */
 	private ArrayList<Point> getPointsToFit() {
 		Integer[] a = new Integer[0];
 		ArrayList<Point> tofit = new ArrayList<Point>();
@@ -500,6 +611,12 @@ public class Polyfitter {
 		}
 	}
 
+	/**
+	 * This Method changing the pointcloud to the choosen slice(by a Vector) and
+	 * performing the plot. Afterwards the old pointcloud getting restored.
+	 * 
+	 * @param b
+	 */
 	private void plothelp(boolean b) {
 		Vector<Integer> copyv = v;
 		ArrayList<Point> copyp = pointcloud;
@@ -516,6 +633,11 @@ public class Polyfitter {
 		dimension = copyd;
 	}
 
+	/**
+	 * The toString method is a nice way to look up the Polyfitter. It contains
+	 * the used Algorithm, the PolynomialReprasentation, a table of values and
+	 * the problem of the fit.
+	 */
 	public String toString() {
 
 		if (v != null) {
@@ -569,6 +691,11 @@ public class Polyfitter {
 		return str;
 	}
 
+	/**
+	 * This Method is a help to get a String to a given Vector.
+	 * 
+	 * @return
+	 */
 	private String toStringhelp() {
 		Vector<Integer> copyv = v;
 		ArrayList<Point> copyp = pointcloud;
@@ -587,6 +714,11 @@ public class Polyfitter {
 		return str;
 	}
 
+	/**
+	 * This method setting up the table for the 3d fit.
+	 * 
+	 * @return
+	 */
 	private String String3d() {
 		String str = "";
 		for (Point pointcloud1 : pointcloud) {
@@ -606,6 +738,13 @@ public class Polyfitter {
 		return str;
 	}
 
+	/**
+	 * This Method is helpfull, to check if a point fits to the dimension, given
+	 * by the other Points.
+	 * 
+	 * @param i
+	 * @return
+	 */
 	private boolean dimensionequal(int i) {
 		if (dimension == 0) {
 			dimension = i;
@@ -616,6 +755,11 @@ public class Polyfitter {
 		return true;
 	}
 
+	/**
+	 * I guess this method needs an Update.
+	 * 
+	 * @param path
+	 */
 	private void readPoints(String path) {
 		ArrayList<float[]> points = new ArrayList<float[]>();
 		try (Scanner sc = new Scanner(new FileReader(path))) {
@@ -641,6 +785,14 @@ public class Polyfitter {
 		dimensionequal(pointcloud.get(0).getDimension());
 	}
 
+	/**
+	 * Method to create Points to given float numbers. If the array.length of
+	 * the given number is higher than 3, the returned Point is an instance of
+	 * PointND.
+	 * 
+	 * @param a
+	 * @return
+	 */
 	private static Point floatToPoint(float[] a) {
 		Point p = null;
 		switch (a.length) {
@@ -664,6 +816,11 @@ public class Polyfitter {
 		return p;
 	}
 
+	/**
+	 * Method to setting a difault Algorithm, if the user forgott, to set one.
+	 * 
+	 * @param str
+	 */
 	private void defaultAlgorithm(String str) {
 		if (algo == null) {
 			System.out.print(str);
@@ -672,6 +829,9 @@ public class Polyfitter {
 		}
 	}
 
+	/**
+	 * Method to Plot a 1 Dimensional function.
+	 */
 	private void plot1D() {
 		int xmin = 0;
 		int xmax = 0;
@@ -707,6 +867,9 @@ public class Polyfitter {
 		p.show();
 	}
 
+	/**
+	 * Method to Plot a 2 Dimensional function.
+	 */
 	private void plot2D() {
 		int xmin = 0;
 		int xmax = 0;
@@ -752,6 +915,11 @@ public class Polyfitter {
 		p.show();
 	}
 
+	/**
+	 * Method to Plot a 3 dimensional function.
+	 * 
+	 * @param d3
+	 */
 	private void plot3D(boolean d3) {
 		SurfacePlotter sp = new SurfacePlotter();
 
@@ -766,34 +934,34 @@ public class Polyfitter {
 		double max = 0;
 		double min = 100000000;
 
-		double minx=100000;
-		double miny=100000;
-		double maxx=1;
-		double maxy=1;
-		for (Point p: pointcloud){
-			if (p.getElementbyNumber(0) < minx){
+		double minx = 100000;
+		double miny = 100000;
+		double maxx = 1;
+		double maxy = 1;
+		for (Point p : pointcloud) {
+			if (p.getElementbyNumber(0) < minx) {
 				minx = p.getElementbyNumber(0);
 			}
-			if (p.getElementbyNumber(1) < miny){
+			if (p.getElementbyNumber(1) < miny) {
 				miny = p.getElementbyNumber(1);
 			}
-			if (p.getElementbyNumber(0) > maxx){
+			if (p.getElementbyNumber(0) > maxx) {
 				maxx = p.getElementbyNumber(0);
 			}
-			if (p.getElementbyNumber(1) > maxy){
+			if (p.getElementbyNumber(1) > maxy) {
 				maxy = p.getElementbyNumber(1);
 			}
 		}
-		if (minx == 0){
+		if (minx == 0) {
 			minx = 0.1;
 		}
-		if (miny == 0){
+		if (miny == 0) {
 			miny = 0.1;
 		}
-		
-		for (double j = minx; j < 500+minx; j++) {
-			for (double i = miny; i < 500+miny; i++) {
-				double e = getValue3d(i * maxy/500, j * maxx/500);
+
+		for (double j = minx; j < 500 + minx; j++) {
+			for (double i = miny; i < 500 + miny; i++) {
+				double e = getValue3d(i * maxy / 500, j * maxx / 500);
 				if (e < min) {
 					min = e;
 				}
@@ -802,9 +970,9 @@ public class Polyfitter {
 
 		min = -min;
 
-		for (double j = minx; j < 500+minx; j++) {
-			for (double i = miny; i < 500+miny; i++) {
-				double e = getValue3d(i * maxy/500, j * maxx/500) + min;
+		for (double j = minx; j < 500 + minx; j++) {
+			for (double i = miny; i < 500 + miny; i++) {
+				double e = getValue3d(i * maxy / 500, j * maxx / 500) + min;
 				if (e > max) {
 					max = e;
 				}
@@ -813,10 +981,11 @@ public class Polyfitter {
 
 		mult = 255 / max;
 
-		for (double j = minx; j < 500+minx; j++) {
-			for (double i = miny; i < 500+miny; i++) {
-				d[0] = (getValue3d(i * maxy/500, j * maxx/500) + min) * mult;
-				ra.setPixel((int) (i-miny), (int) (j-minx), d);
+		for (double j = minx; j < 500 + minx; j++) {
+			for (double i = miny; i < 500 + miny; i++) {
+				d[0] = (getValue3d(i * maxy / 500, j * maxx / 500) + min)
+						* mult;
+				ra.setPixel((int) (i - miny), (int) (j - minx), d);
 			}
 		}
 
@@ -825,7 +994,8 @@ public class Polyfitter {
 		ImagePlus imgplus = new ImagePlus("2d data", ip);
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
-		JTextField jt = new JTextField("x=<<not set>>/ y=<<not set>>/ z=<<not set>>");
+		JTextField jt = new JTextField(
+				"x=<<not set>>/ y=<<not set>>/ z=<<not set>>");
 		jt.setEditable(false);
 		Window w = ImageWindow.getWindows()[0];
 		w.setSize(new Dimension((int) w.getSize().getWidth(), (int) w.getSize()
@@ -861,12 +1031,12 @@ public class Polyfitter {
 					if (y > 500) {
 						y = 500;
 					}
-					x = (x+minx)*maxx/500;
-					y = (y+miny)*maxy/500;
+					x = (x + minx) * maxx / 500;
+					y = (y + miny) * maxy / 500;
 					String str = "x = " + x + "/ y = " + y + "/ z = "
 							+ getValue3d(x, y);
-					if (! jt.getText().equals(str)){
-					jt.setText(str);
+					if (!jt.getText().equals(str)) {
+						jt.setText(str);
 					}
 				}
 				Thread.sleep(500);
