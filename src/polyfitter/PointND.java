@@ -32,4 +32,14 @@ public class PointND implements Point{
 	public void addElement(double d){
 		elements.add(d);
 	}
+	
+	public String toString(){
+		StringBuilder s = new StringBuilder();
+		s.append("(");
+		for (double d: elements){
+			s.append(d+"/");
+		}
+		s.append(")");
+		return s.toString();
+	}
 }

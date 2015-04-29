@@ -10,6 +10,7 @@ import ij.process.ImageProcessor;
 
 import javax.swing.JFrame;
 import javax.swing.JTextField;
+import javax.swing.plaf.synth.SynthSpinnerUI;
 import javax.vecmath.Point3d;
 
 import java.awt.Component;
@@ -19,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Vector;
@@ -39,9 +41,9 @@ public class Polyfitter {
 
 	private Vector<Integer> v;
 
-	private ArrayList<Integer> args = new ArrayList<Integer>();
+	private ArrayList<Optimize> optimize = new ArrayList<Optimize>();
 
-	public final Optimazation optimazationOptions = new Optimazation(args);
+	public final Optimazation optimazationOptions = new Optimazation(optimize);
 
 	public Polyfitter() {
 	}
@@ -301,7 +303,7 @@ public class Polyfitter {
 	}
 
 	public void removePoints() {
-		pointcloud = new ArrayList<>();
+		pointcloud.clear();
 	}
 
 	public double[] fit() {
@@ -332,68 +334,139 @@ public class Polyfitter {
 
 		this.v = v;
 
-		return useOptimasation(getPointsToFit());
+		return fithelp();
+	}
+
+	private double[] fithelp() {
+		Vector<Integer> copyv = v;
+		ArrayList<Point> copyp = pointcloud;
+		int copyd = dimension;
+
+		dimension = v.size();
+		pointcloud = getPointsToFit();
+		v = null;
+
+		double pol[] = this.fit();
+
+		v = copyv;
+		while (copyp.size() > pointcloud.size()){
+			copyp.remove(copyp.size()-1);
+		}
+		pointcloud = copyp;
+		dimension = copyd;
+
+		return pol;
 	}
 
 	private double[] useOptimasation(ArrayList<Point> pointcloud) {
 		boolean ausgabe = false;
-		for (int i : args) {
-			switch (i) {
-			case 2:
-				int stepsize = 10;
-				int degree = algo.getDegree();
-				algo.fit(pointcloud);
-				double problem1 = algo.getProblem();
-				while (true) {
-					if (degree - stepsize >= 0) {
-						algo.setDegree(degree - stepsize);
-						algo.fit(pointcloud);
-						double problem2 = algo.getProblem();
-						if (problem2 < problem1) {
-							degree -= stepsize;
-							problem1 = problem2;
-							if (ausgabe) {
-								System.out
-										.println("Reducing degree from "
-												+ (degree + stepsize) + " to "
-												+ degree);
-							}
-							continue;
-						}
-					}
-					algo.setDegree(degree + stepsize);
-					algo.fit(pointcloud);
-					double problem2 = algo.getProblem();
-					if (problem2 < problem1) {
-						degree += stepsize;
-						problem1 = problem2;
-						if (ausgabe) {
-							System.out.println("Increasing degree from "
-									+ (degree - stepsize) + " to " + degree);
-						}
-						continue;
-					}
-					if (stepsize > 1) {
-						stepsize--;
-						continue;
-					}
-					if (ausgabe) {
-						System.out.println("best degree found: degree = "
-								+ degree);
-					}
-					algo.setDegree(degree);
-					break;
-				}
+		for (Optimize o : optimize) {
+			switch (o.command) {
+			case Optimize.SEARCH_DEGREE:
+				searchbetterdegree(o.arg, ausgabe, o.epsilon);
 				break;
-			case 3:
-				ausgabe = true;
+			case Optimize.OUTPUT:
+				ausgabe = o.arg == 1 ? true : false;
 				break;
-			case 4:
-				ausgabe = false;
+			case Optimize.REMOVE_POINTS:
+				searchbetterPoints(o.arg, ausgabe, o.epsilon);
 				break;
 			}
 		}
 		return algo.fit(pointcloud);
+	}
+
+	private void searchbetterPoints(int arg, boolean ausgabe, double prob) {
+		if (ausgabe) {
+			System.out.println("Starting searchbetterPoints...");
+		}
+		int startsize = pointcloud.size();
+		while (pointcloud.size() > 2) {
+			algo.fit(pointcloud);
+			double problem1 = algo.getProblem();
+			if (problem1 < prob) {
+				if (ausgabe) {
+					System.out
+							.println("SearchbetterPoints terminated, because of the given problem("
+									+ prob + ")");
+				}
+				break;
+			}
+			Point p = pointcloud.get(pointcloud.size() - 1);
+			pointcloud.remove(pointcloud.size() - 1);
+			algo.fit(pointcloud);
+			double problem2 = algo.getProblem();
+			if (problem2 < problem1) {
+				if (ausgabe) {
+					System.out.println("\tRemoving last Point ("
+							+ pointcloud.size() + " Points left)");
+				}
+				continue;
+			}
+			pointcloud.add(p);
+			if (ausgabe) {
+				System.out
+						.println("SearchbetterPoints terminated, because it cant find a smaller problem.");
+			}
+			break;
+		}
+		System.out.println("Removed " + (startsize - pointcloud.size())
+				+ " Point(s).");
+	}
+
+	private void searchbetterdegree(int arg, boolean ausgabe, double prob) {
+		if (ausgabe) {
+			System.out.println("Starting searchbetterDegree...");
+		}
+		int stepsize = arg;
+		int degree = algo.getDegree();
+		int maxUP = degree + stepsize;
+		int maxdown = degree - stepsize;
+		algo.fit(pointcloud);
+		double problem1 = algo.getProblem();
+
+		while (true) {
+			if (problem1 < prob) {
+				break;
+			}
+			if (degree - stepsize >= 0) {
+				algo.setDegree(degree - stepsize);
+				algo.fit(pointcloud);
+				double problem2 = algo.getProblem();
+				if (problem2 < problem1 && maxdown <= (degree - stepsize)) {
+					degree -= stepsize;
+					problem1 = problem2;
+					if (ausgabe) {
+						System.out.println("\tReducing degree from "
+								+ (degree + stepsize) + " to " + degree);
+					}
+					continue;
+				}
+			}
+			algo.setDegree(degree + stepsize);
+			algo.fit(pointcloud);
+			double problem2 = algo.getProblem();
+			if (problem2 < problem1 && (degree + stepsize) <= maxUP) {
+				degree += stepsize;
+				problem1 = problem2;
+				if (ausgabe) {
+					System.out.println("\tIncreasing degree from "
+							+ (degree - stepsize) + " to " + degree);
+				}
+				continue;
+			}
+			if (stepsize > 1) {
+				stepsize /= 2;
+				continue;
+			}
+			break;
+		}
+		if (ausgabe) {
+			System.out.println("SearchbetterDegree teminated. Result degree = "
+					+ degree + "\nChanged degree by: "
+					+ Math.abs((maxUP - arg) - degree) + ".");
+		}
+		algo.setDegree(degree);
 	}
 
 	private ArrayList<Point> getPointsToFit() {
@@ -682,7 +755,7 @@ public class Polyfitter {
 	private void plot3D(boolean d3) {
 		SurfacePlotter sp = new SurfacePlotter();
 
-		BufferedImage im = new BufferedImage(500, 400,
+		BufferedImage im = new BufferedImage(500, 500,
 				BufferedImage.TYPE_BYTE_GRAY);
 
 		WritableRaster ra = im.getRaster();
@@ -693,9 +766,34 @@ public class Polyfitter {
 		double max = 0;
 		double min = 100000000;
 
-		for (double j = 0; j < 400; j++) {
-			for (double i = 0; i < 500; i++) {
-				double e = getValue3d(i / 10, j / 10);
+		double minx=100000;
+		double miny=100000;
+		double maxx=1;
+		double maxy=1;
+		for (Point p: pointcloud){
+			if (p.getElementbyNumber(0) < minx){
+				minx = p.getElementbyNumber(0);
+			}
+			if (p.getElementbyNumber(1) < miny){
+				miny = p.getElementbyNumber(1);
+			}
+			if (p.getElementbyNumber(0) > maxx){
+				maxx = p.getElementbyNumber(0);
+			}
+			if (p.getElementbyNumber(1) > maxy){
+				maxy = p.getElementbyNumber(1);
+			}
+		}
+		if (minx == 0){
+			minx = 0.1;
+		}
+		if (miny == 0){
+			miny = 0.1;
+		}
+		
+		for (double j = minx; j < 500+minx; j++) {
+			for (double i = miny; i < 500+miny; i++) {
+				double e = getValue3d(i * maxy/500, j * maxx/500);
 				if (e < min) {
 					min = e;
 				}
@@ -704,9 +802,9 @@ public class Polyfitter {
 
 		min = -min;
 
-		for (double j = 0; j < 400; j++) {
-			for (double i = 0; i < 500; i++) {
-				double e = getValue3d(i / 10, j / 10) + min;
+		for (double j = minx; j < 500+minx; j++) {
+			for (double i = miny; i < 500+miny; i++) {
+				double e = getValue3d(i * maxy/500, j * maxx/500) + min;
 				if (e > max) {
 					max = e;
 				}
@@ -715,10 +813,10 @@ public class Polyfitter {
 
 		mult = 255 / max;
 
-		for (double j = 0; j < 400; j++) {
-			for (double i = 0; i < 500; i++) {
-				d[0] = (getValue3d(i / 10, j / 10) + min) * mult;
-				ra.setPixel((int) i, (int) j, d);
+		for (double j = minx; j < 500+minx; j++) {
+			for (double i = miny; i < 500+miny; i++) {
+				d[0] = (getValue3d(i * maxy/500, j * maxx/500) + min) * mult;
+				ra.setPixel((int) (i-miny), (int) (j-minx), d);
 			}
 		}
 
@@ -727,7 +825,7 @@ public class Polyfitter {
 		ImagePlus imgplus = new ImagePlus("2d data", ip);
 		ImageWindow imgw = new ImageWindow(imgplus);
 		ImageWindow.centerNextImage();
-		JTextField jt = new JTextField("swag");
+		JTextField jt = new JTextField("x=<<not set>>/ y=<<not set>>/ z=<<not set>>");
 		jt.setEditable(false);
 		Window w = ImageWindow.getWindows()[0];
 		w.setSize(new Dimension((int) w.getSize().getWidth(), (int) w.getSize()
@@ -749,22 +847,27 @@ public class Polyfitter {
 					jt.setSize(jt.getPreferredSize());
 					p = imgw.getMousePosition();
 					Dimension d1 = imgw.getSize();
-					double x = ((p.getX() - (d1.getWidth() - 500) / 2)) / 10;
-					double y = ((p.getY() - (d1.getHeight() - 387) / 2)) / 10;
+					double x = ((p.getX() - (d1.getWidth() - 500) / 2));
+					double y = ((p.getY() - (d1.getHeight() - 487) / 2));
 					if (x < 0) {
 						x = 0;
 					}
 					if (y < 0) {
 						y = 0;
 					}
-					if (x > 50) {
-						x = 50;
+					if (x > 500) {
+						x = 500;
 					}
-					if (y > 40) {
-						y = 40;
+					if (y > 500) {
+						y = 500;
 					}
-					jt.setText("x = " + x + "/ y = " + y + "/ z = "
-							+ getValue3d(x, y));
+					x = (x+minx)*maxx/500;
+					y = (y+miny)*maxy/500;
+					String str = "x = " + x + "/ y = " + y + "/ z = "
+							+ getValue3d(x, y);
+					if (! jt.getText().equals(str)){
+					jt.setText(str);
+					}
 				}
 				Thread.sleep(500);
 			} catch (NullPointerException | InterruptedException e) {
@@ -806,25 +909,45 @@ public class Polyfitter {
 	}
 
 	public class Optimazation {
-		private ArrayList<Integer> arg = new ArrayList<>();
+		private ArrayList<Optimize> arg = new ArrayList<>();
 
-		public Optimazation(ArrayList<Integer> listener) {
+		public Optimazation(ArrayList<Optimize> listener) {
 			arg = listener;
 		}
 
-		public void canRemovePoints() {
-			arg.add(1);
+		public void canRemoveLastPoint(int maxRemoveable, double problem) {
+			arg.add(new Optimize(Optimize.REMOVE_POINTS, maxRemoveable, problem));
 		}
 
-		public void searchBetterDegree() {
-			arg.add(2);
+		public void searchBetterDegree(int maxDegreeChange, double problem) {
+			if (maxDegreeChange <= 0) {
+				System.out
+						.println("Optimazation.searchBetterDegree not acepted, because of not guilty argument.");
+				return;
+			}
+			arg.add(new Optimize(Optimize.SEARCH_DEGREE, maxDegreeChange));
 		}
 
-		public void setOptimizationOutPut(Boolean b) {
-			if (b)
-				arg.add(3);
-			else
-				arg.add(4);
+		public void setOptimizationOutPut(boolean b) {
+			arg.add(new Optimize(Optimize.OUTPUT, b == true ? 1 : 0));
+		}
+	}
+
+	private class Optimize {
+		static final int OUTPUT = 0, REMOVE_POINTS = 1, SEARCH_DEGREE = 2;
+		int command;
+		int arg;
+		double epsilon;
+
+		public Optimize(int c, int a) {
+			command = c;
+			arg = a;
+		}
+
+		public Optimize(int c, int a, double ep) {
+			command = c;
+			arg = a;
+			epsilon = ep;
 		}
 	}
 }
