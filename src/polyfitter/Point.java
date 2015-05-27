@@ -1,6 +1,6 @@
 package polyfitter;
 
-interface Point{
+public interface Point{
 	int getDimension();
 	double getElementbyNumber(int i);
 }

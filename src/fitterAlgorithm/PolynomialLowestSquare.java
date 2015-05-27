@@ -1,15 +1,20 @@
-package polyfitter;
+package fitterAlgorithm;
 
 import java.util.ArrayList;
+
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import functions.Function;
+import functions.PolynomialFunction;
+import polyfitter.Point;
+
 /**
  * This class is an example for an implementation of a FitterAlgorithm.
  */
-public class LowestSquare implements FitterAlgorithm {
+public class PolynomialLowestSquare implements FitterAlgorithm {
 
 	private RealMatrix A;
 
@@ -18,14 +23,12 @@ public class LowestSquare implements FitterAlgorithm {
 	private RealMatrix polynom;
 
 	private int degree;
-
-	private boolean degreeset;
 	// I dont know, how the iterations fits into the algorithm. They are not
 	// used yet.
 	// private int iterations;
 
-	public LowestSquare() {
-		degreeset = false;
+	public PolynomialLowestSquare(int degree) {
+		this.degree = degree;
 	}
 
 	public double getProblem() {
@@ -44,11 +47,11 @@ public class LowestSquare implements FitterAlgorithm {
 		return prob;
 	}
 
-	public double[] getPolynom() {
+	public Function getFunction() {
 		if (polynom == null) {
-			return new double[0];
+			return null;
 		}
-		return polynom.getColumn(0);
+		return new PolynomialFunction(polynom.getColumn(0));
 	}
 
 	public int getDegree() {
@@ -62,13 +65,12 @@ public class LowestSquare implements FitterAlgorithm {
 			d = 0;
 		}
 		degree = d;
-		degreeset = true;
 	}
 
 	public void setMaxIterations(int i) {
 	}
 
-	public double[] fit(ArrayList<Point> pointcloud) {
+	public Function fit(ArrayList<Point> pointcloud, Function f) {
 		float[][] a = new float[pointcloud.size()][pointcloud.get(0)
 				.getDimension()];
 		int index = 0;
@@ -79,7 +81,8 @@ public class LowestSquare implements FitterAlgorithm {
 			}
 			a[index++] = b;
 		}
-		return fit(a);
+		fit(a);
+		return getFunction();
 	}
 
 	/**
@@ -87,13 +90,6 @@ public class LowestSquare implements FitterAlgorithm {
 	 * minimal.
 	 */
 	public double[] fit(float[][] points){
-		int numberofpoints = points.length;
-		if (!degreeset) {
-			System.out
-					.println("The degree of the polynom is not set. Setting highest possible degree (d = "
-							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints - 1;
-		}
 		
 		setUpAandB(points);
 

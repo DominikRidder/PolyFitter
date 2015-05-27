@@ -1,5 +1,8 @@
 package polyfitter;
 
+import fitterAlgorithm.FitterAlgorithm;
+import fitterAlgorithm.PolynomialLowestSquare;
+import functions.Function;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -22,6 +25,11 @@ import java.util.Vector;
 
 public class Polyfitter {
 
+	/**
+	 * f is the function
+	 */
+	private Function f;
+	
 	/**
 	 * algo is the Algorithm, that will perform the Polynomialfitting
 	 */
@@ -87,6 +95,10 @@ public class Polyfitter {
 		}
 	}
 
+	public void setFunction(Function f){
+		this.f = f;
+	}
+	
 	/**
 	 * Private method to get the Value of an 2D function.
 	 * 
@@ -94,34 +106,30 @@ public class Polyfitter {
 	 * @return
 	 */
 	private double getValue(double d) {
-		double[] a = algo.getPolynom();
-		double value = 0;
-		for (int i = 0; i < a.length; i++) {
-			value += a[a.length - 1 - i] * Math.pow(d, i);
-		}
-		return value;
+		f = algo.getFunction();
+		return f.f(d);
 	}
 
 	/**
-	 * Returning the Polynom as an array.
+	 * Returning the Function of the fit.
 	 * 
 	 * @return
 	 */
-	public double[] getPolynom() {
+	public Function getFunction() {
 		if (pointcloud == null) {
 			System.out.println("At first you have to set some Points.");
-			return new double[0];
+			return null;
 		}
 		defaultAlgorithm("You have to set an algorithm to get a Polynom.");
 		double[] poly;
-		try {
-			poly = algo.getPolynom();
-		} catch (NullPointerException e) {
+	
+			f = algo.getFunction();
+		if (f == null){
 			System.out
 					.println("fit() have to be called first. Performing fit methode to set a polynom...");
-			poly = fit();
+			f = fit();
 		}
-		return poly;
+		return f;
 	}
 
 	/**
@@ -138,21 +146,21 @@ public class Polyfitter {
 			return getPolynomRepresentation3d();
 		}
 		String str = "";
-		double poly[] = algo.getPolynom();
-		if (poly.length == 0) {
-			System.out
-					.println("You have to perform the fit method before u can get a Polynom.");
-			return "<<not set>>";
-		}
-		for (int i = 0; i < poly.length; i++) {
-			if (i != 0 && poly[i] >= 0) {
-				str += "+ ";
-			} else if (poly[i] < 0) {
-				str += "- ";
-			}
-			str += Math.abs(poly[i]) + "x^" + (poly.length - i - 1) + " ";
-		}
-		return str;
+		f = algo.getFunction();
+//		if (poly.length == 0) {
+//			System.out
+//					.println("You have to perform the fit method before u can get a Polynom.");
+//			return "<<not set>>";
+//		}
+//		for (int i = 0; i < poly.length; i++) {
+//			if (i != 0 && poly[i] >= 0) {
+//				str += "+ ";
+//			} else if (poly[i] < 0) {
+//				str += "- ";
+//			}
+//			str += Math.abs(poly[i]) + "x^" + (poly.length - i - 1) + " ";
+//		}
+		return f.toString();
 	}
 
 	/**
@@ -163,18 +171,18 @@ public class Polyfitter {
 	private String getPolynomRepresentation3d() {
 		String str = "";
 		int j = 0;
-		double poly[] = algo.getPolynom();
-		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
-			for (int i = 0; i <= grenze; i++) {
-				if (poly[j] >= 0) {
-					str += "+ ";
-				} else if (poly[j] < 0) {
-					str += "- ";
-				}
-				str += Math.abs(poly[j++]) + "x^" + (grenze - i) + "y^" + i
-						+ " ";
-			}
-		}
+		f = algo.getFunction();
+//		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
+//			for (int i = 0; i <= grenze; i++) {
+//				if (poly[j] >= 0) {
+//					str += "+ ";
+//				} else if (poly[j] < 0) {
+//					str += "- ";
+//				}
+//				str += Math.abs(poly[j++]) + "x^" + (grenze - i) + "y^" + i
+//						+ " ";
+//			}
+//		}
 
 		return str;
 	}
@@ -190,13 +198,13 @@ public class Polyfitter {
 	private double getValue3d(double d, double t) {
 		double value = 0;
 		int j = 0;
-		double poly[] = algo.getPolynom();
-		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
-			for (int i = 0; i <= grenze; i++) {
-				value += poly[j++] * Math.pow(d, (grenze - i)) * Math.pow(t, i);
-			}
-		}
-		return value;
+		f = algo.getFunction();
+//		for (int grenze = algo.getDegree(); grenze >= 0; grenze--) {
+//			for (int i = 0; i <= grenze; i++) {
+//				value += poly[j++] * Math.pow(d, (grenze - i)) * Math.pow(t, i);
+//			}
+//		}
+		return f.f(d);
 	}
 
 	/**
@@ -226,14 +234,14 @@ public class Polyfitter {
 		}
 	}
 
-	/**
-	 * This Method setting the used Algorithm to the LowestSquare Algorithm.
-	 * Instead of this method, you could also write fitter.setAlgorithm(new
-	 * LowestSquare());
-	 */
-	public void setAlgorithmLowestSquare() {
-		setAlgorithm(new LowestSquare());
-	}
+//	/**
+//	 * This Method setting the used Algorithm to the LowestSquare Algorithm.
+//	 * Instead of this method, you could also write fitter.setAlgorithm(new
+//	 * LowestSquare());
+//	 */
+//	public void setAlgorithmLowestSquare() {
+//		setAlgorithm(new PolynomialLowestSquare());
+//	}
 
 	public void setPoints(String path) {
 		pointcloud = null;
@@ -321,10 +329,10 @@ public class Polyfitter {
 	 * 
 	 * @return thepolynom as an array
 	 */
-	public double[] fit() {
+	public Function fit() {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
-			return new double[0];
+			return null;
 		}
 		defaultAlgorithm("There must be a algorithm to perform the fit.");
 		if (dimension == 1 && algo.getDegree() != 0) {
@@ -342,10 +350,10 @@ public class Polyfitter {
 	 * @param v
 	 * @return
 	 */
-	public double[] fit(Vector<Integer> v) {
+	public Function fit(Vector<Integer> v) {
 		if (pointcloud == null) {
 			System.out.println("Fitting failed. There are no Points to fit.");
-			return new double[0];
+			return null;
 		}
 		defaultAlgorithm("There must be a algorithm to perform the fit.");
 		if (dimension == 1 && algo.getDegree() != 0) {
@@ -364,7 +372,7 @@ public class Polyfitter {
 	 * 
 	 * @return
 	 */
-	private double[] fithelp() {
+	private Function fithelp() {
 		Vector<Integer> copyv = v;
 		ArrayList<Point> copyp = pointcloud;
 		int copyd = dimension;
@@ -373,7 +381,7 @@ public class Polyfitter {
 		pointcloud = getPointsToFit();
 		v = null;
 
-		double pol[] = this.fit();
+		f = this.fit();
 
 		v = copyv;
 		while (copyp.size() > pointcloud.size()) {
@@ -382,7 +390,7 @@ public class Polyfitter {
 		pointcloud = copyp;
 		dimension = copyd;
 
-		return pol;
+		return f;
 	}
 
 	/**
@@ -391,7 +399,7 @@ public class Polyfitter {
 	 * @param pointcloud
 	 * @return
 	 */
-	private double[] useOptimasation(ArrayList<Point> pointcloud) {
+	private Function useOptimasation(ArrayList<Point> pointcloud) {
 		boolean ausgabe = false;
 		for (Optimize o : optimize) {
 			switch (o.command) {
@@ -406,7 +414,7 @@ public class Polyfitter {
 				break;
 			}
 		}
-		return algo.fit(pointcloud);
+		return algo.fit(pointcloud, f);
 	}
 
 	/**
@@ -424,7 +432,7 @@ public class Polyfitter {
 		}
 		int startsize = pointcloud.size();
 		while (pointcloud.size() > 2) {
-			algo.fit(pointcloud);
+			algo.fit(pointcloud, f);
 			double problem1 = algo.getProblem();
 			if (problem1 < prob) {
 				if (ausgabe) {
@@ -436,7 +444,7 @@ public class Polyfitter {
 			}
 			Point p = pointcloud.get(pointcloud.size() - 1);
 			pointcloud.remove(pointcloud.size() - 1);
-			algo.fit(pointcloud);
+			algo.fit(pointcloud, f);
 			double problem2 = algo.getProblem();
 			if (problem2 < problem1) {
 				if (ausgabe) {
@@ -472,7 +480,7 @@ public class Polyfitter {
 		int degree = algo.getDegree();
 		int maxUP = degree + stepsize;
 		int maxdown = degree - stepsize;
-		algo.fit(pointcloud);
+		algo.fit(pointcloud, f);
 		double problem1 = algo.getProblem();
 
 		while (true) {
@@ -481,7 +489,7 @@ public class Polyfitter {
 			}
 			if (degree - stepsize >= 0) {
 				algo.setDegree(degree - stepsize);
-				algo.fit(pointcloud);
+				algo.fit(pointcloud, f);
 				double problem2 = algo.getProblem();
 				if (problem2 < problem1 && maxdown <= (degree - stepsize)) {
 					degree -= stepsize;
@@ -494,7 +502,7 @@ public class Polyfitter {
 				}
 			}
 			algo.setDegree(degree + stepsize);
-			algo.fit(pointcloud);
+			algo.fit(pointcloud, f);
 			double problem2 = algo.getProblem();
 			if (problem2 < problem1 && (degree + stepsize) <= maxUP) {
 				degree += stepsize;
@@ -769,8 +777,8 @@ public class Polyfitter {
 	private void defaultAlgorithm(String str) {
 		if (algo == null) {
 			System.out.print(str);
-			System.out.println(" Setting Default algorithm: LowestSquare.");
-			algo = new LowestSquare();
+			System.out.println(" Setting Default algorithm: LowestSquare (degree 2).");
+			algo = new PolynomialLowestSquare(2);
 		}
 	}
 
@@ -804,7 +812,7 @@ public class Polyfitter {
 		y = new double[1];
 		y[0] = 0;
 		x = new double[1];
-		x[0] = algo.getPolynom()[0];
+//		x[0] = algo.getFunction();
 
 		p.addPoints(x, y, Plot.CIRCLE);
 

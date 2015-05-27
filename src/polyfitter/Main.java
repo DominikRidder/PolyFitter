@@ -2,14 +2,18 @@ package polyfitter;
 
 import java.util.Vector;
 
+import fitterAlgorithm.PolynomialLowestSquare;
+import functions.PolynomialFunction;
+
 public class Main {
 
 	public static void main(String agrs[]) {
 		Polyfitter fitter = new Polyfitter();
 		
-		// setting algorithm and degree
-		fitter.setAlgorithmLowestSquare();
-		fitter.setDegree(5);
+		// setting algorithm
+		fitter.setAlgorithm(new PolynomialLowestSquare(2));
+		// or setting a function
+//		fitter.setFunction(new PolynomialFunction(2));
 		
 		// adding points
 		fitter.addPoint(create4DPoint(10, 20, 30, 40));

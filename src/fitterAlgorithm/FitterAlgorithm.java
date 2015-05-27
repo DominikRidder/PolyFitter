@@ -1,12 +1,15 @@
-package polyfitter;
+package fitterAlgorithm;
 
 import java.util.ArrayList;
 
+import functions.Function;
+import polyfitter.Point;
+
 public interface FitterAlgorithm {
 	int getDegree();
-	double[] getPolynom();
+	Function getFunction();
 	double getProblem();
 	void setMaxIterations(int i);
 	void setDegree(int d);
-	double[] fit(ArrayList<Point> pointcloud);
+	Function fit(ArrayList<Point> pointcloud, Function f);
 }
