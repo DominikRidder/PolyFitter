@@ -9,7 +9,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import javax.swing.JTextField;
-import javax.vecmath.Point3d;
 
 import java.awt.Dimension;
 import java.awt.Window;
@@ -65,15 +64,6 @@ public class Polyfitter {
 	 */
 	public Polyfitter(String path) {
 		setPoints(path);
-	}
-
-	/**
-	 *
-	 * @param pointcloud
-	 * 
-	 */
-	public Polyfitter(ArrayList<Object> pointcloud) {
-		setPoints(pointcloud);
 	}
 
 	public ArrayList<Point> getPointcloud() {
@@ -251,12 +241,6 @@ public class Polyfitter {
 		addPoints(path);
 	}
 
-	public void setPoints(ArrayList<Object> pointcloud) {
-		dimension = 0;
-		this.pointcloud = null;
-		addPoints(pointcloud);
-	}
-
 	public void setPoints(float[][] pointcloud) {
 		this.pointcloud = null;
 		dimension = 0;
@@ -322,41 +306,6 @@ public class Polyfitter {
 		}
 		float[][] pointstoadd = { { (float) x, (float) y, (float) z } };
 		addPoints(pointstoadd);
-	}
-
-	public void addPoints(ArrayList<Object> pointcloud) {
-		float pointstoadd[][] = null;
-		if (pointcloud.get(0).getClass().getName().equals("java.awt.Point")) {
-			if (!dimensionequal(2)) {
-				System.out
-						.println("addPoints failed. You can not mix points from diffent dimensions.");
-				return;
-			}
-			pointstoadd = new float[pointcloud.size()][2];
-			for (int i = 0; i < pointcloud.size(); i++) {
-				pointstoadd[i][0] = ((java.awt.Point) (pointcloud.get(i))).x;
-				pointstoadd[i][1] = ((java.awt.Point) (pointcloud.get(i))).y;
-			}
-			addPoints(pointstoadd);
-		} else if (pointcloud.get(0).getClass().getName()
-				.equals("javax.vecmath.Point3d")) {
-			if (!dimensionequal(3)) {
-				System.out
-						.println("addPoints failed. You can not mix points from diffent dimensions.");
-				return;
-			}
-			pointstoadd = new float[pointcloud.size()][3];
-			for (int i = 0; i < pointcloud.size(); i++) {
-				pointstoadd[i][0] = (float) ((Point3d) pointcloud.get(i)).x;
-				pointstoadd[i][1] = (float) ((Point3d) pointcloud.get(i)).y;
-				pointstoadd[i][2] = (float) ((Point3d) pointcloud.get(i)).z;
-			}
-			addPoints(pointstoadd);
-		} else {
-			throw new RuntimeException("The class "
-					+ pointcloud.get(0).getClass().getName()
-					+ " is not supported");
-		}
 	}
 
 	/**
