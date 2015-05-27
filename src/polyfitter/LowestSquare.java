@@ -1,8 +1,6 @@
 package polyfitter;
 
 import java.util.ArrayList;
-import java.util.Vector;
-
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -85,18 +83,10 @@ public class LowestSquare implements FitterAlgorithm {
 	}
 
 	/**
-	 * Uses the formula: x = (AT * A)^-1 * (AT*b). This way the Problem x become
+	 * Uses the formula: x = (AT * A)^-1 * (AT*b). This way the Problem become
 	 * minimal.
 	 */
-	public double[] fit(float[][] points) {
-		if (points[0].length == 3) {
-			// if (degree != 1) {
-			// System.out
-			// .println("This FitterAlgorithm cant fit 3d Points yet, except for degree = 1.");
-			// System.exit(1);
-			// }
-			return fit3d(points);
-		}
+	public double[] fit(float[][] points){
 		int numberofpoints = points.length;
 		if (!degreeset) {
 			System.out
@@ -104,22 +94,11 @@ public class LowestSquare implements FitterAlgorithm {
 							+ (numberofpoints - 1) + ").");
 			degree = numberofpoints - 1;
 		}
+		
+		setUpAandB(points);
 
-		double[][] a = new double[numberofpoints][degree + 1];
-		double[][] B = new double[numberofpoints][1];
-		int i = 0;
-		for (int c = 0; c < numberofpoints; c++) {
-			B[i][0] = points[i][points[0].length - 1];
-			for (int j = degree; j >= 0; j--) {
-				a[i][degree - j] = Math.pow(points[i][0], j);
-			}
-			i++;
-		}
-
-		A = new BlockRealMatrix(a);
 		RealMatrix AT = A.transpose();
-		b = new BlockRealMatrix(B);
-
+		
 		RealMatrix C = AT.multiply(A);
 
 		C = new QRDecomposition(C).getSolver().getInverse();
@@ -132,107 +111,52 @@ public class LowestSquare implements FitterAlgorithm {
 
 		return polynom.getColumn(0);
 	}
-
-	public double[] fit3d(float[][] points) {
+	
+	private void setUpAandB(float[][] points) {
 		int numberofpoints = points.length;
-		if (!degreeset) {
-			System.out
-					.println("The degree of the polynom is not set. Setting highest possible degree (d = "
-							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints - 1;
-		}
-		// if (degree >= numberofpoints) {
-		// System.out
-		// .println("The degree is to high for this algorithm. Setting highest possible degree (d = "
-		// + (numberofpoints - 1) + ").");
-		// degree = numberofpoints - 1;
-		// }
-
-		int counter = 0;
-		for (int i = 0; i <= degree; i++) {
-			counter += i + 1;
-		}
-
-		double[][] a = new double[numberofpoints][counter];
-		double[][] B = new double[numberofpoints][1];
-
-		int pos;
-		for (int j = 0; j < points.length; j++) {
-			B[j][0] = points[j][2];
-			// pos = counter-1;
-			pos = 0;
-			for (int grenze = degree; grenze >= 0; grenze--) {
-				for (int i = 0; i <= grenze; i++) {
-					a[j][pos++] = Math.pow(points[j][0], grenze - i)
-							* Math.pow(points[j][1], i);
+		if (points[0].length <3){
+			double[][] a = new double[numberofpoints][degree + 1];
+			double[][] B = new double[numberofpoints][1];
+			int i = 0;
+			for (int c = 0; c < numberofpoints; c++) {
+				B[i][0] = points[i][points[0].length - 1];
+				for (int j = degree; j >= 0; j--) {
+					a[i][degree - j] = Math.pow(points[i][0], j);
 				}
+				i++;
 			}
-		}
 
-		A = new BlockRealMatrix(a);
-		RealMatrix AT = A.transpose();
-		b = new BlockRealMatrix(B);
+			A = new BlockRealMatrix(a);
 
-		RealMatrix C = AT.multiply(A);
-
-		C = new QRDecomposition(C).getSolver().getInverse();
-
-		RealMatrix D = AT.multiply(b);
-
-		C = C.multiply(D);
-
-		polynom = C;
-
-		return polynom.getColumn(0);
-	}
-
-	public double[] fit3d2(float[][] points) {
-		int numberofpoints = points.length;
-		if (!degreeset) {
-			System.out
-					.println("The degree of the polynom is not set. Setting highest possible degree (d = "
-							+ (numberofpoints - 1) + ").");
-			degree = numberofpoints - 1;
-		}
-
-		int counter = 0;
-		for (int x = degree; x >= 0; x--) {
-			for (int y = degree; y >= 0; y--) {
-				counter++;
-			}
-		}
-
-		double[][] a = new double[numberofpoints][counter];
-		double[][] B = new double[numberofpoints][1];
-
-		int pos;
-
-		for (int j = 0; j < numberofpoints; j++) {
-			B[j][0] = points[j][2];
-			pos = 0;
+			b = new BlockRealMatrix(B);
+		}else{
+			int counter = 0;
 			for (int x = degree; x >= 0; x--) {
 				for (int y = degree; y >= 0; y--) {
-					a[j][pos++] = Math.pow(points[j][0], x)
-							* Math.pow(points[j][1], y);
+					counter++;
 				}
 			}
+
+			double[][] a = new double[numberofpoints][counter];
+			double[][] B = new double[numberofpoints][1];
+
+			int pos;
+
+			for (int j = 0; j < numberofpoints; j++) {
+				B[j][0] = points[j][2];
+				pos = 0;
+				for (int x = degree; x >= 0; x--) {
+					for (int y = degree; y >= 0; y--) {
+						a[j][pos++] = Math.pow(points[j][0], x)
+								* Math.pow(points[j][1], y);
+					}
+				}
+			}
+
+			A = new BlockRealMatrix(a);
+
+			b = new BlockRealMatrix(B);
 		}
-
-		A = new BlockRealMatrix(a);
-		RealMatrix AT = A.transpose();
-		b = new BlockRealMatrix(B);
-
-		RealMatrix C = AT.multiply(A);
-
-		C = new QRDecomposition(C).getSolver().getInverse();
-
-		RealMatrix D = AT.multiply(b);
-
-		C = C.multiply(D);
-
-		polynom = C;
-
-		return polynom.getColumn(0);
+		
 	}
-
 }

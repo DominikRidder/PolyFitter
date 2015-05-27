@@ -8,19 +8,15 @@ import ij.plugin.SurfacePlotter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
-import javax.swing.JFrame;
 import javax.swing.JTextField;
-import javax.swing.plaf.synth.SynthSpinnerUI;
 import javax.vecmath.Point3d;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Vector;
@@ -806,7 +802,7 @@ public class Polyfitter {
 			p = new Point3D(a[0], a[1], a[2]);
 			break;
 		case 4:
-			p = new Point4D();
+			p = new Point4D(a[0], a[1], a[2], a[3]);
 			break;
 		default:
 			p = new PointND();
