@@ -8,7 +8,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import functions.Function;
-import functions.PolynomialFunction;
+import functions.PolynomialFunction2D;
 import polyfitter.Point;
 
 /**
@@ -51,7 +51,7 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 		if (polynom == null) {
 			return null;
 		}
-		return new PolynomialFunction(polynom.getColumn(0));
+		return new PolynomialFunction2D(polynom.getColumn(0));
 	}
 
 	public int getDegree() {

@@ -3,7 +3,7 @@ package polyfitter;
 import java.util.Vector;
 
 import fitterAlgorithm.PolynomialLowestSquare;
-import functions.PolynomialFunction;
+import functions.PolynomialFunction2D;
 
 public class Main {
 
@@ -16,12 +16,12 @@ public class Main {
 //		fitter.setFunction(new PolynomialFunction(2));
 		
 		// adding points
-		fitter.addPoint(create4DPoint(10, 20, 30, 40));
-		fitter.addPoint(create4DPoint(5, 40, 14, 50));
-		fitter.addPoint(create4DPoint(20, 8, 50, 60));
-		fitter.addPoint(create4DPoint(40, 60, 3, 70));
-		fitter.addPoint(create4DPoint(25, 10, 48, 80));
-		fitter.addPoint(create4DPoint(0, 0, 0, 90));
+		fitter.addPoint(new Point4D(10, 1, 30, 1));
+		fitter.addPoint(new Point4D(5, 2, 14, 4));
+		fitter.addPoint(new Point4D(20, 3, 50, 9));
+		fitter.addPoint(new Point4D(40, 4, 3, 16));
+		fitter.addPoint(new Point4D(25, 5, 48, 25));
+		fitter.addPoint(new Point4D(0, 0, 0, 0));
 //		fitter.addPoint(create4DPoint(0, -1000, 500, 90));
 
 		// choosing x y and z
@@ -45,10 +45,5 @@ public class Main {
 		// this function makes the fitting visible
 		fitter.plot(true); // false -> only 2d plot/data
 		
-	}
-	
-	public static PointND create4DPoint(double x1, double x2, double x3, double x4){
-		double a[] = {x1, x2, x3, x4};
-		return new PointND(a);
 	}
 }
