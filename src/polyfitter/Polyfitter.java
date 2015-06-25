@@ -11,10 +11,21 @@ import ij.gui.Plot;
 import ij.plugin.SurfacePlotter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import imagehandling.KeyMap;
+import imagehandling.Volume;
 
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -1073,6 +1084,147 @@ public class Polyfitter {
 			command = c;
 			arg = a;
 			epsilon = ep;
+		}
+	}
+
+	public static void fitVolume(String path) {
+		Volume vol = new Volume(path);
+		// int x = 100;
+		// int y = 100;
+		// int z = 1;
+
+		int[] arr = new int[1];
+
+		ArrayList<Point> toFit = new ArrayList<Point>();
+		ArrayList<BufferedImage> data = vol.getData();
+		String str_echo_numbers = vol.getSlice(vol.size() - 1).getAttribute(
+				KeyMap.KEY_ECHO_NUMBERS_S);
+		int width = data.get(0).getWidth();
+		int height = data.get(0).getHeight();
+		int echo_numbers = Integer.parseInt(str_echo_numbers);
+		int perEcho = vol.size() / echo_numbers;
+		int maxprob = 1;
+
+		double minprob = 1000000;
+		int counter = 0;
+
+		double starttime = System.currentTimeMillis() / 1000;
+
+		Polyfitter fitter = new Polyfitter();
+		fitter.setAlgorithm(new PolynomialLowestSquare(1));
+
+		JFrame frame = new JFrame();
+		frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
+
+		ArrayList<BufferedImage> buffimg = new ArrayList<BufferedImage>();
+
+		int[] probrasta = new int[width * height];
+
+		for (int z = 0; z < echo_numbers; z++) {
+			BufferedImage probimg = new BufferedImage(width, height,
+					BufferedImage.TYPE_BYTE_GRAY);
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					toFit.clear();
+					for (int i = 0; i < echo_numbers; i++) {
+						toFit.add(new Point2D(i, data.get(i * perEcho + z)
+								.getRaster().getPixel(x, y, arr)[0]));
+					}
+
+					fitter.removePoints();
+					for (Point p : toFit) {
+						fitter.addPoint(p);
+					}
+
+					fitter.fit();
+					int prob = (int) fitter.getProblem();
+
+					probrasta[x + width * y] = prob;
+					if (prob > maxprob) {
+						maxprob = prob;
+					} else if (prob < minprob) {
+						minprob = prob;
+					}
+					counter++;
+				}
+			}
+
+			WritableRaster r = probimg.getRaster();
+
+			for (int i = 0; i < width * height; i++) {
+				probrasta[i] = probrasta[i] * 255 / maxprob;
+			}
+
+			r.setPixels(0, 0, width, height, probrasta);
+
+			probimg.setData(r);
+
+			buffimg.add(probimg);
+
+		}
+		BufferedImage image = new BufferedImage(width, height,
+				BufferedImage.TYPE_BYTE_GRAY);
+		frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+		JSlider slide = new JSlider(JSlider.HORIZONTAL, 0, buffimg.size() - 1,
+				0);
+		JTextField tf = new JTextField("0");
+		tf.setMaximumSize(new Dimension(50,50));
+		JPanel jp = new JPanel(new GridLayout(1, 2));
+		jp.add(tf);
+		jp.add(slide);
+		jp.setMaximumSize(new Dimension(image.getWidth(), image.getHeight()));
+		jp.setMinimumSize(new Dimension(image.getWidth(), image.getHeight()));
+		frame.getContentPane().add(jp);
+		frame.setMinimumSize(new Dimension(image.getWidth(), image.getHeight()));
+		frame.setMaximumSize(new Dimension(image.getWidth(), image.getHeight()));
+		frame.getContentPane().setMaximumSize(
+				new Dimension(image.getWidth(), image.getHeight()));
+		frame.getContentPane().setMinimumSize(
+				new Dimension(image.getWidth(), image.getHeight()));
+		frame.setMaximumSize(new Dimension(image.getWidth(), image.getHeight()));
+		frame.setMinimumSize(new Dimension(image.getWidth(), image.getHeight()));
+		frame.pack();
+		frame.setVisible(true);
+		frame.repaint();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		double endtime = System.currentTimeMillis() / 1000;
+
+		System.out.println("Time: " + (endtime - starttime) + ".sek");
+		System.out.println("minprob = " + minprob);
+		System.out.println("maxprob = " + maxprob);
+		System.out.println("counter = " + counter);
+		int actual = -1;
+		while (true) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (actual != slide.getValue()) {
+				actual = slide.getValue();
+				tf.setText("" + actual);
+				image.getGraphics().drawImage(
+						buffimg.get(actual).getScaledInstance(image.getWidth(),
+								image.getHeight(), BufferedImage.SCALE_FAST),
+						0, 0, null);
+				frame.repaint();
+			}
+			try{
+				int test = Integer.parseInt(tf.getText());
+			if (test != actual && test>=0 && test<=slide.getMaximum()) {
+				actual = Integer.parseInt(tf.getText());
+				slide.setValue(actual);
+				image.getGraphics().drawImage(
+						buffimg.get(actual).getScaledInstance(image.getWidth(),
+								image.getHeight(), BufferedImage.SCALE_FAST),
+						0, 0, null);
+				frame.repaint();
+			}
+			}catch(NumberFormatException e){
+				
+			}
 		}
 	}
 }
