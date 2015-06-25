@@ -1,14 +1,9 @@
 package polyfitter;
 
-import java.util.Vector;
-
-import fitterAlgorithm.PolynomialLowestSquare;
-import functions.PolynomialFunction2D;
-
 public class Main {
 
 	public static void main(String agrs[]) {
-		Polyfitter.fitVolume("/opt/dridder_local/TestDicoms/Testfolder3/15.05.19-17:00:13-DST-1.3.12.2.1107.5.2.32.35135/020_vg_gre_m0w__w2dfl_ltr");
+		Polyfitter.fitVolume("/opt/dridder_local/TestDicoms/Testfolder3/15.05.19-17:00:13-DST-1.3.12.2.1107.5.2.32.35135/020_vg_gre_m0w__w2dfl_ltr",true);
 //		Polyfitter fitter = new Polyfitter();
 //		
 //		// setting algorithm

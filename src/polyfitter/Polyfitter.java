@@ -1087,7 +1087,7 @@ public class Polyfitter {
 		}
 	}
 
-	public static void fitVolume(String path) {
+	public static void fitVolume(String path, boolean reversedGrayScaling) {
 		Volume vol = new Volume(path);
 		// int x = 100;
 		// int y = 100;
@@ -1105,7 +1105,6 @@ public class Polyfitter {
 		int perEcho = vol.size() / echo_numbers;
 		int maxprob = 1;
 
-		double minprob = 1000000;
 		int counter = 0;
 
 		double starttime = System.currentTimeMillis() / 1000;
@@ -1142,8 +1141,6 @@ public class Polyfitter {
 					probrasta[x + width * y] = prob;
 					if (prob > maxprob) {
 						maxprob = prob;
-					} else if (prob < minprob) {
-						minprob = prob;
 					}
 					counter++;
 				}
@@ -1153,6 +1150,9 @@ public class Polyfitter {
 
 			for (int i = 0; i < width * height; i++) {
 				probrasta[i] = probrasta[i] * 255 / maxprob;
+				if (reversedGrayScaling){
+					probrasta[i] = 255 - probrasta[i];
+				}
 			}
 
 			r.setPixels(0, 0, width, height, probrasta);
@@ -1169,7 +1169,7 @@ public class Polyfitter {
 				0);
 		JTextField tf = new JTextField("0");
 		tf.setMaximumSize(new Dimension(50,50));
-		JPanel jp = new JPanel(new GridLayout(1, 2));
+		JPanel jp = new JPanel(new GridLayout(2, 1));
 		jp.add(tf);
 		jp.add(slide);
 		jp.setMaximumSize(new Dimension(image.getWidth(), image.getHeight()));
@@ -1191,15 +1191,13 @@ public class Polyfitter {
 		double endtime = System.currentTimeMillis() / 1000;
 
 		System.out.println("Time: " + (endtime - starttime) + ".sek");
-		System.out.println("minprob = " + minprob);
-		System.out.println("maxprob = " + maxprob);
-		System.out.println("counter = " + counter);
+		System.out.println("Highest problem: " + maxprob);
+		System.out.println("Number of fittings: " + counter);
 		int actual = -1;
 		while (true) {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			if (actual != slide.getValue()) {
