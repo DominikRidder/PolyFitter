@@ -1,5 +1,9 @@
 package polyfitter;
 
+/**
+ * Point class, which contains 1 double elements.
+ *
+ */
 public class Point1D implements Point{
 	private double x;
 	

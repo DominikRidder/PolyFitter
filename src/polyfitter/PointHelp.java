@@ -1,11 +1,20 @@
 package polyfitter;
 
+/**
+ * This Class only contains a single method, which is usefull, to create the
+ * minimal Point class, to a given array of elements.
+ */
 public class PointHelp {
 
-	private PointHelp(){
+	private PointHelp() {
 		// this class only contains a static method
 	}
-	
+
+	/**
+	 * This method creating the minimal Point class, to a given array of double elements.
+	 * @param elements
+	 * @return
+	 */
 	public static Point createPoint(double[] elements) {
 		switch (elements.length) {
 		case 0:
