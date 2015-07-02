@@ -98,6 +98,7 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 		RealMatrix C = AT.multiply(A);
 
 		C = new QRDecomposition(C).getSolver().getInverse();
+		
 
 		RealMatrix D = AT.multiply(b);
 
