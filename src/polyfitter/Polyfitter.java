@@ -14,6 +14,7 @@ import ij.process.ImageProcessor;
 
 import javax.swing.JTextField;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
@@ -823,7 +824,136 @@ public class Polyfitter {
 			p.drawLine(a, getValue(a), a + dx, getValue(a + dx));
 		}
 		p.draw();
+
 		p.show();
+	}
+
+	/**
+	 * Method to Plot a 2 Dimensional function.
+	 */
+	protected BufferedImage plotVolume(boolean alsolog) {
+		Vector<Integer> normal = new Vector<Integer>();
+		normal.add(0);
+		normal.add(1);
+		Vector<Integer> log = new Vector<Integer>();
+		log.add(0);
+		log.add(2);
+
+		Plot p = new Plot("PolyFitter", "X", "Y");
+		p.setFrameSize(1000, 1000);
+
+		fit(normal);
+
+		int xmin = 0;
+		int xmax = 0;
+		int ymin = -10;
+		int ymax = 300;
+		double dx = 0.2;
+		double[] x = new double[pointcloud.size()];
+		double[] y = new double[pointcloud.size()];
+		int i = 0;
+		for (Point a : pointcloud) {
+			x[i] = a.getElementbyNumber(0);
+			if (x[i] >= xmax) {
+				xmax = (int) x[i] + 1;
+			}
+			if (x[i] - 1 <= xmin) {
+				xmin = (int) x[i] - 1;
+			}
+			y[i] = a.getElementbyNumber(1);
+			if (y[i] >= ymax) {
+				ymax = (int) y[i] + 1;
+			}
+			if (y[i] - 1 <= ymin) {
+				ymin = (int) (y[i]);
+			}
+			i++;
+		}
+		// for (double a = xmin; a + dx < xmax; a += dx) {
+		// if (getValue(a + dx) + 2 > ymax) {
+		// ymax = (int) getValue(a + dx) + 2;
+		// }
+		// if (getValue(a + dx) - 1 < ymin) {
+		// ymin = (int) getValue(a + dx) - 1;
+		// }
+		// }
+		p.setLimits(xmin, xmax, ymin, ymax);
+		p.setLineWidth(10);
+		p.addPoints(x, y, Plot.X);
+		p.setLineWidth(3);
+		double a;
+		for (a = xmin; a + dx <= xmax; a += dx) {
+			double y1 = getValue(a);
+			double y2 = getValue(a + dx);
+			if (y1 < ymin) {
+				y1 = ymin;
+			} else if (y1 > ymax) {
+				y1 = ymax;
+			}
+			if (y2 < ymin) {
+				y2 = ymin;
+			} else if (y2 > ymax) {
+				y2 = ymax;
+			}
+			p.drawLine(a, y1, a + dx, y2);
+		}
+		p.drawLine(a, getValue(a), xmax, getValue(a));
+
+		if (alsolog) {
+			fit(log);
+
+			x = new double[pointcloud.size()];
+			y = new double[pointcloud.size()];
+			i = 0;
+			for (Point b : pointcloud) {
+				x[i] = b.getElementbyNumber(0);
+				if (x[i] >= xmax) {
+					xmax = (int) x[i] + 1;
+				}
+				if (x[i] - 1 <= xmin) {
+					xmin = (int) x[i] - 1;
+				}
+				y[i] = b.getElementbyNumber(2);
+				if (y[i] >= ymax) {
+					ymax = (int) y[i] + 1;
+				}
+				if (y[i] - 1 <= ymin) {
+					ymin = (int) (y[i]);
+				}
+				i++;
+			}
+			// for (double a = xmin; a + dx < xmax; a += dx) {
+			// if (getValue(a + dx) + 2 > ymax) {
+			// ymax = (int) getValue(a + dx) + 2;
+			// }
+			// if (getValue(a + dx) - 1 < ymin) {
+			// ymin = (int) getValue(a + dx) - 1;
+			// }
+			// }
+			p.setColor(Color.GREEN);
+			p.setLineWidth(10);
+			p.addPoints(x, y, Plot.X);
+			p.setLineWidth(3);
+			for (a = xmin; a + dx <= xmax; a += dx) {
+				double y1 = getValue(a);
+				double y2 = getValue(a + dx);
+				if (y1 < ymin) {
+					y1 = ymin;
+				} else if (y1 > ymax) {
+					y1 = ymax;
+				}
+				if (y2 < ymin) {
+					y2 = ymin;
+				} else if (y2 > ymax) {
+					y2 = ymax;
+				}
+				p.drawLine(a, y1, a + dx, y2);
+			}
+			p.drawLine(a, getValue(a), xmax, getValue(a));
+		}
+		
+		p.draw();
+		return p.getImagePlus().getBufferedImage();
 	}
 
 	/**
@@ -1031,6 +1161,5 @@ public class Polyfitter {
 			epsilon = ep;
 		}
 	}
-	
 
 }
