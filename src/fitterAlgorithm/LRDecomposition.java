@@ -7,14 +7,11 @@ import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import polyfitter.Point;
 import functions.Function;
 import functions.PolynomialFunction2D;
-import polyfitter.Point;
 
-/**
- * This class is an example for an implementation of a FitterAlgorithm.
- */
-public class PolynomialLowestSquare implements FitterAlgorithm {
+public class LRDecomposition implements FitterAlgorithm {
 
 	private RealMatrix A;
 
@@ -22,12 +19,17 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 
 	private RealMatrix polynom;
 
+	private RealMatrix R;
+
+	private RealMatrix L;
+
 	private int degree;
+
 	// I dont know, how the iterations fits into the algorithm. They are not
 	// used yet.
 	// private int iterations;
 
-	public PolynomialLowestSquare(int degree) {
+	public LRDecomposition(int degree) {
 		this.degree = degree;
 	}
 
@@ -51,7 +53,7 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 		if (polynom == null) {
 			return null;
 		}
-		return new PolynomialFunction2D(polynom.getColumn(0));
+		return new PolynomialFunction2D(polynom.getRow(0));
 	}
 
 	public int getDegree() {
@@ -90,36 +92,76 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	 * Uses the formula: x = (AT * A)^-1 * (AT*b). This way the Problem become
 	 * minimal.
 	 */
-	public double[] fit(float[][] points){
-		
+	public double[] fit(float[][] points) {
+
 		setUpAandB(points);
 
-		RealMatrix AT = A.transpose();
+		if (R == null) {
+			R = new BlockRealMatrix(A.getData());
+			int n = degree+1;
+			L = new BlockRealMatrix(n, n);
+			for (int i=0; i<n; i++){
+				L.setEntry(i, i, 1);
+			}
+
+			// n-1 Iterationsschritte
+			for (int i = 0; i < n - 1; i++) {
+				// Zeilen der Restmatrix werden durchlaufen
+				for (int k = i+1; k < n; k++) {
+					// Berechnung von L
+					L.setEntry(k, i, R.getEntry(k, i) / R.getEntry(i, i));// Achtung:
+																			// vorher
+																			// Prüfung
+																			// auf
+																			// Nullwerte
+																			// notwendig
+					// Spalten der Restmatrix werden durchlaufen
+					for (int j = i; j < n; j++) {
+						// Berechnung von R
+						R.setEntry(k, j, R.getEntry(k, j) - L.getEntry(k, i)
+								* R.getEntry(i, j));
+					}
+				}
+			}
+		}
 		
-		RealMatrix C = AT.multiply(A);
-
-		C = new QRDecomposition(C).getSolver().getInverse();
+		int n = degree+1;
 		
+		polynom = new BlockRealMatrix(1, n);
 
-		RealMatrix D = AT.multiply(b);
-
-		C = C.multiply(D);
-
-		polynom = C;
+		RealMatrix y = new BlockRealMatrix(1, n);
+		
+		for (int i = 0; i<n; i++){
+			double yi = 0;
+			for (int k= 0; k<i-1; k++){
+				yi += L.getEntry(i, k) * y.getEntry(0, k); 
+			}
+			yi = (b.getEntry(i, 0)-yi)/L.getEntry(i, i);
+			y.setEntry(0, i, yi);
+		}
+		
+		for (int i = n-1; i>=0; i--){
+			double xi = 0;
+			for (int k= 1; k<n; k++){
+				xi += R.getEntry(i, k) * polynom.getEntry(0, k); 
+			}
+			xi = (y.getEntry(0, i)-xi)/R.getEntry(i, i);
+			polynom.setEntry(0, i, xi);
+		}
 
 		return polynom.getColumn(0);
 	}
-	
+
 	private void setUpAandB(float[][] points) {
 		int numberofpoints = points.length;
-		if (points[0].length <3){
+		if (points[0].length < 3) {
 			double[][] a = new double[numberofpoints][degree + 1];
 			double[][] B = new double[numberofpoints][1];
 			int i = 0;
 			for (int c = 0; c < numberofpoints; c++) {
 				B[i][0] = points[i][points[0].length - 1];
 				for (int j = degree; j >= 0; j--) {
-					a[i][degree - j] = Math.pow(points[i][0], j);
+					a[i][j] = Math.pow(points[i][0], j);
 				}
 				i++;
 			}
@@ -127,7 +169,7 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 			A = new BlockRealMatrix(a);
 
 			b = new BlockRealMatrix(B);
-		}else{
+		} else {
 			int counter = 0;
 			for (int x = degree; x >= 0; x--) {
 				for (int y = degree; y >= 0; y--) {
@@ -155,6 +197,6 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 
 			b = new BlockRealMatrix(B);
 		}
-		
+
 	}
 }

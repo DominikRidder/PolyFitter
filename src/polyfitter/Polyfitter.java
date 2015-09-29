@@ -831,7 +831,7 @@ public class Polyfitter {
 	/**
 	 * Method to Plot a 2 Dimensional function.
 	 */
-	protected BufferedImage plotVolume(boolean alsolog) {
+	public BufferedImage plotVolume(boolean alsolog) {
 		Vector<Integer> normal = new Vector<Integer>();
 		normal.add(0);
 		normal.add(1);
@@ -848,7 +848,7 @@ public class Polyfitter {
 		int xmax = 0;
 		int ymin = -10;
 		int ymax = 300;
-		double dx = 0.2;
+		double dx = 0.01;
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
@@ -897,8 +897,7 @@ public class Polyfitter {
 			}
 			p.drawLine(a, y1, a + dx, y2);
 		}
-		p.drawLine(a, getValue(a), xmax, getValue(a));
-
+		
 		if (alsolog) {
 			fit(log);
 

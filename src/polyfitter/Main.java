@@ -3,10 +3,7 @@ package polyfitter;
 public class Main {
 
 	public static void main(String agrs[]) {
-		String path = "/opt/dridder_local/TestDicoms/AllDicoms/15.05.19-17:00:13-DST-1.3.12.2.1107.5.2.32.35135/24_vg_gre_m0w__w3dfl";
-		boolean reversedGrayScaling = false;
 
-		VolumeFitter.fitVolume(path,reversedGrayScaling);
 		// Polyfitter fitter = new Polyfitter();
 		//
 		// // setting algorithm
