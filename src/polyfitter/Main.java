@@ -4,8 +4,8 @@ public class Main {
 
 	public static void main(String agrs[]) {
 
-		// Polyfitter fitter = new Polyfitter();
-		//
+//		 Polyfitter fitter = new Polyfitter();
+		
 		// // setting algorithm
 		// fitter.setAlgorithm(new PolynomialLowestSquare(2));
 		// // or setting a function

@@ -3,7 +3,6 @@ package fitterAlgorithm;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -53,7 +52,12 @@ public class LRDecomposition implements FitterAlgorithm {
 		if (polynom == null) {
 			return null;
 		}
-		return new PolynomialFunction2D(polynom.getRow(0));
+		double[] d = polynom.getColumn(0);
+		double[] rev = new double[d.length];
+		for (int i=0; i<rev.length; i++){
+			rev[rev.length-1-i] = d[i];
+		}
+		return new PolynomialFunction2D(rev);
 	}
 
 	public int getDegree() {
@@ -124,29 +128,29 @@ public class LRDecomposition implements FitterAlgorithm {
 				}
 			}
 		}
-		
+
 		int n = degree+1;
 		
-		polynom = new BlockRealMatrix(1, n);
+		polynom = new BlockRealMatrix(n, 1);
 
-		RealMatrix y = new BlockRealMatrix(1, n);
+		RealMatrix y = new BlockRealMatrix(n, 1);
 		
 		for (int i = 0; i<n; i++){
 			double yi = 0;
-			for (int k= 0; k<i-1; k++){
-				yi += L.getEntry(i, k) * y.getEntry(0, k); 
+			for (int k= 0; k<i; k++){
+				yi += L.getEntry(i, k) * y.getEntry(k, 0); 
 			}
 			yi = (b.getEntry(i, 0)-yi)/L.getEntry(i, i);
-			y.setEntry(0, i, yi);
+			y.setEntry(i, 0, yi);
 		}
 		
 		for (int i = n-1; i>=0; i--){
 			double xi = 0;
 			for (int k= 1; k<n; k++){
-				xi += R.getEntry(i, k) * polynom.getEntry(0, k); 
+				xi += R.getEntry(i, k) * polynom.getEntry(k, 0); 
 			}
-			xi = (y.getEntry(0, i)-xi)/R.getEntry(i, i);
-			polynom.setEntry(0, i, xi);
+			xi = (y.getEntry(i, 0)-xi)/R.getEntry(i, i);
+			polynom.setEntry(i, 0, xi);
 		}
 
 		return polynom.getColumn(0);

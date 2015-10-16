@@ -843,7 +843,7 @@ public class Polyfitter {
 		p.setFrameSize(1000, 1000);
 
 		fit(normal);
-
+		
 		int xmin = 0;
 		int xmax = 0;
 		int ymin = -10;
