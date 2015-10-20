@@ -16,6 +16,7 @@ import javax.swing.JTextField;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -194,12 +195,14 @@ public class Polyfitter {
 		if (this.algo != null) {
 			System.out
 					.println("The algorithm was already set. The result of the fitting by the old algorithm is lost now.");
-			this.algo = algo;
-		} else {
-			this.algo = algo;
 		}
+		this.algo = algo;
 	}
 
+	public void removeAlgorithm(){
+		this.algo = null;
+	}
+	
 	public void setPoints(String path) {
 		pointcloud = null;
 		dimension = 0;
@@ -831,7 +834,7 @@ public class Polyfitter {
 	/**
 	 * Method to Plot a 2 Dimensional function.
 	 */
-	public BufferedImage plotVolume(boolean alsolog) {
+	public BufferedImage plotVolume(boolean logScale) {
 		Vector<Integer> normal = new Vector<Integer>();
 		normal.add(0);
 		normal.add(1);
@@ -839,15 +842,16 @@ public class Polyfitter {
 		log.add(0);
 		log.add(2);
 
-		Plot p = new Plot("PolyFitter", "X", "Y");
+		Plot p = new Plot("PolyFitter", "Echo Nr.", "GrayScale");
+		p.setFont(new Font(null, Font.BOLD, 30));
 		p.setFrameSize(1000, 1000);
-
+		p.setColor(logScale ? Color.BLUE : Color.black);
 		fit(normal);
 		
 		int xmin = 0;
 		int xmax = 0;
-		int ymin = -10;
-		int ymax = 300;
+		int ymin = logScale ? -1 : -10;
+		int ymax = logScale ? 10 : 300;
 		double dx = 0.01;
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
@@ -898,58 +902,58 @@ public class Polyfitter {
 			p.drawLine(a, y1, a + dx, y2);
 		}
 		
-		if (alsolog) {
-			fit(log);
-
-			x = new double[pointcloud.size()];
-			y = new double[pointcloud.size()];
-			i = 0;
-			for (Point b : pointcloud) {
-				x[i] = b.getElementbyNumber(0);
-				if (x[i] >= xmax) {
-					xmax = (int) x[i] + 1;
-				}
-				if (x[i] - 1 <= xmin) {
-					xmin = (int) x[i] - 1;
-				}
-				y[i] = b.getElementbyNumber(2);
-				if (y[i] >= ymax) {
-					ymax = (int) y[i] + 1;
-				}
-				if (y[i] - 1 <= ymin) {
-					ymin = (int) (y[i]);
-				}
-				i++;
-			}
-			// for (double a = xmin; a + dx < xmax; a += dx) {
-			// if (getValue(a + dx) + 2 > ymax) {
-			// ymax = (int) getValue(a + dx) + 2;
-			// }
-			// if (getValue(a + dx) - 1 < ymin) {
-			// ymin = (int) getValue(a + dx) - 1;
-			// }
-			// }
-			p.setColor(Color.GREEN);
-			p.setLineWidth(10);
-			p.addPoints(x, y, Plot.X);
-			p.setLineWidth(3);
-			for (a = xmin; a + dx <= xmax; a += dx) {
-				double y1 = getValue(a);
-				double y2 = getValue(a + dx);
-				if (y1 < ymin) {
-					y1 = ymin;
-				} else if (y1 > ymax) {
-					y1 = ymax;
-				}
-				if (y2 < ymin) {
-					y2 = ymin;
-				} else if (y2 > ymax) {
-					y2 = ymax;
-				}
-				p.drawLine(a, y1, a + dx, y2);
-			}
-			p.drawLine(a, getValue(a), xmax, getValue(a));
-		}
+//		if (logScale) {
+//			fit(log);
+//
+//			x = new double[pointcloud.size()];
+//			y = new double[pointcloud.size()];
+//			i = 0;
+//			for (Point b : pointcloud) {
+//				x[i] = b.getElementbyNumber(0);
+//				if (x[i] >= xmax) {
+//					xmax = (int) x[i] + 1;
+//				}
+//				if (x[i] - 1 <= xmin) {
+//					xmin = (int) x[i] - 1;
+//				}
+//				y[i] = b.getElementbyNumber(2);
+//				if (y[i] >= ymax) {
+//					ymax = (int) y[i] + 1;
+//				}
+//				if (y[i] - 1 <= ymin) {
+//					ymin = (int) (y[i]);
+//				}
+//				i++;
+//			}
+//			// for (double a = xmin; a + dx < xmax; a += dx) {
+//			// if (getValue(a + dx) + 2 > ymax) {
+//			// ymax = (int) getValue(a + dx) + 2;
+//			// }
+//			// if (getValue(a + dx) - 1 < ymin) {
+//			// ymin = (int) getValue(a + dx) - 1;
+//			// }
+//			// }
+//			p.setColor(Color.BLUE);
+//			p.setLineWidth(10);
+//			p.addPoints(x, y, Plot.X);
+//			p.setLineWidth(3);
+//			for (a = xmin; a + dx <= xmax; a += dx) {
+//				double y1 = getValue(a);
+//				double y2 = getValue(a + dx);
+//				if (y1 < ymin) {
+//					y1 = ymin;
+//				} else if (y1 > ymax) {
+//					y1 = ymax;
+//				}
+//				if (y2 < ymin) {
+//					y2 = ymin;
+//				} else if (y2 > ymax) {
+//					y2 = ymax;
+//				}
+//				p.drawLine(a, y1, a + dx, y2);
+//			}
+//			p.drawLine(a, getValue(a), xmax, getValue(a));
+//		}
 		
 		p.draw();
 		return p.getImagePlus().getBufferedImage();
