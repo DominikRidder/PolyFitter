@@ -835,23 +835,18 @@ public class Polyfitter {
 	 * Method to Plot a 2 Dimensional function.
 	 */
 	public BufferedImage plotVolume(boolean logScale) {
-		Vector<Integer> normal = new Vector<Integer>();
-		normal.add(0);
-		normal.add(1);
-		Vector<Integer> log = new Vector<Integer>();
-		log.add(0);
-		log.add(2);
-
 		Plot p = new Plot("PolyFitter", "Echo Nr.", "GrayScale");
-		p.setFont(new Font(null, Font.BOLD, 30));
-		p.setFrameSize(1000, 1000);
+		p.setFont(new Font(null, Font.BOLD, 10));
+		p.setFrameSize(300, 300);
 		p.setColor(logScale ? Color.BLUE : Color.black);
-		fit(normal);
+		fit();
+		removeBadPoints();
+		fit();
 		
 		int xmin = 0;
 		int xmax = 0;
-		int ymin = logScale ? -1 : -10;
-		int ymax = logScale ? 10 : 300;
+		int ymin = 1000;
+		int ymax = 0;
 		double dx = 0.01;
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
@@ -873,87 +868,45 @@ public class Polyfitter {
 			}
 			i++;
 		}
-		// for (double a = xmin; a + dx < xmax; a += dx) {
-		// if (getValue(a + dx) + 2 > ymax) {
-		// ymax = (int) getValue(a + dx) + 2;
-		// }
-		// if (getValue(a + dx) - 1 < ymin) {
-		// ymin = (int) getValue(a + dx) - 1;
-		// }
-		// }
+//		for (double a = xmin; a + dx < xmax; a += dx) {
+//			if (getValue(a + dx) + 2 > ymax) {
+//				ymax = (int) getValue(a + dx) + 2;
+//			}
+//			if (getValue(a + dx) - 1 < ymin) {
+//				ymin = (int) getValue(a + dx) - 1;
+//			}
+//		}
+		ymin*=0.9;
+		ymax*=1.1;
 		p.setLimits(xmin, xmax, ymin, ymax);
-		p.setLineWidth(10);
+		p.setLineWidth(1);
 		p.addPoints(x, y, Plot.X);
-		p.setLineWidth(3);
+		p.setLineWidth(2);
 		double a;
+		int changed=0;
 		for (a = xmin; a + dx <= xmax; a += dx) {
+			changed = 0;
 			double y1 = getValue(a);
 			double y2 = getValue(a + dx);
 			if (y1 < ymin) {
 				y1 = ymin;
+				changed++;
 			} else if (y1 > ymax) {
 				y1 = ymax;
+				changed++;
 			}
 			if (y2 < ymin) {
 				y2 = ymin;
+				changed++;
 			} else if (y2 > ymax) {
 				y2 = ymax;
+				changed++;
+			}
+			if (changed == 2){
+				continue;
 			}
 			p.drawLine(a, y1, a + dx, y2);
 		}
-		
-//		if (logScale) {
-//			fit(log);
-//
-//			x = new double[pointcloud.size()];
-//			y = new double[pointcloud.size()];
-//			i = 0;
-//			for (Point b : pointcloud) {
-//				x[i] = b.getElementbyNumber(0);
-//				if (x[i] >= xmax) {
-//					xmax = (int) x[i] + 1;
-//				}
-//				if (x[i] - 1 <= xmin) {
-//					xmin = (int) x[i] - 1;
-//				}
-//				y[i] = b.getElementbyNumber(2);
-//				if (y[i] >= ymax) {
-//					ymax = (int) y[i] + 1;
-//				}
-//				if (y[i] - 1 <= ymin) {
-//					ymin = (int) (y[i]);
-//				}
-//				i++;
-//			}
-//			// for (double a = xmin; a + dx < xmax; a += dx) {
-//			// if (getValue(a + dx) + 2 > ymax) {
-//			// ymax = (int) getValue(a + dx) + 2;
-//			// }
-//			// if (getValue(a + dx) - 1 < ymin) {
-//			// ymin = (int) getValue(a + dx) - 1;
-//			// }
-//			// }
-//			p.setColor(Color.BLUE);
-//			p.setLineWidth(10);
-//			p.addPoints(x, y, Plot.X);
-//			p.setLineWidth(3);
-//			for (a = xmin; a + dx <= xmax; a += dx) {
-//				double y1 = getValue(a);
-//				double y2 = getValue(a + dx);
-//				if (y1 < ymin) {
-//					y1 = ymin;
-//				} else if (y1 > ymax) {
-//					y1 = ymax;
-//				}
-//				if (y2 < ymin) {
-//					y2 = ymin;
-//				} else if (y2 > ymax) {
-//					y2 = ymax;
-//				}
-//				p.drawLine(a, y1, a + dx, y2);
-//			}
-//			p.drawLine(a, getValue(a), xmax, getValue(a));
-//		}
 		
 		p.draw();
 		return p.getImagePlus().getBufferedImage();
@@ -1162,6 +1115,22 @@ public class Polyfitter {
 			command = c;
 			arg = a;
 			epsilon = ep;
+		}
+	}
+	
+	public void removeBadPoints(){
+		double average = 0;
+		for (Point p: pointcloud){
+			average+= Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1));
+		}
+		average/=pointcloud.size();
+		
+		for (int i=0; i<pointcloud.size() && pointcloud.size()>1; i++){
+			Point p = pointcloud.get(i);
+			if (Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1)) > average+10){
+				pointcloud.remove(i--);
+				System.out.println("removed point "+i);
+			}
 		}
 	}
 
