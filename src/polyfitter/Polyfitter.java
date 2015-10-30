@@ -836,7 +836,7 @@ public class Polyfitter {
 	 */
 	public BufferedImage plotVolume(boolean logScale) {
 		Plot p = new Plot("PolyFitter", "Echo Nr.", "GrayScale");
-		p.setFont(new Font(null, Font.BOLD, 10));
+		p.setFont(new Font(null, Font.BOLD, 20));
 		p.setFrameSize(300, 300);
 		p.setColor(logScale ? Color.BLUE : Color.black);
 		fit();
@@ -845,7 +845,7 @@ public class Polyfitter {
 		
 		int xmin = 0;
 		int xmax = 0;
-		int ymin = 1000;
+		int ymin = 300;
 		int ymax = 0;
 		double dx = 0.01;
 		double[] x = new double[pointcloud.size()];
@@ -879,7 +879,7 @@ public class Polyfitter {
 		ymin*=0.9;
 		ymax*=1.1;
 		p.setLimits(xmin, xmax, ymin, ymax);
-		p.setLineWidth(1);
+		p.setLineWidth(3);
 		p.addPoints(x, y, Plot.X);
 		p.setLineWidth(2);
 		double a;
@@ -1119,17 +1119,17 @@ public class Polyfitter {
 	}
 	
 	public void removeBadPoints(){
-		double average = 0;
+		double averagedecay = 0;
 		for (Point p: pointcloud){
-			average+= Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1));
+			averagedecay+= Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1));
 		}
-		average/=pointcloud.size();
+		averagedecay/=pointcloud.size();
 		
-		for (int i=0; i<pointcloud.size() && pointcloud.size()>1; i++){
+		for (int i=0; i<pointcloud.size() && pointcloud.size()>3; i++){
 			Point p = pointcloud.get(i);
-			if (Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1)) > average+10){
+			if (Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1)) > averagedecay+10){
 				pointcloud.remove(i--);
-				System.out.println("removed point "+i);
+//				System.out.println("removed point "+i);
 			}
 		}
 	}

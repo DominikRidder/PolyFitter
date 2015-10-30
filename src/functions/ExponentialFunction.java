@@ -6,7 +6,7 @@ public class ExponentialFunction implements Function{
 	
 	public double f(double x) {
 //		return a-Math.pow(Math.E, b*x);
-		return a/Math.pow(Math.E, b*x);
+		return a*Math.pow(Math.E, b*x);
 	}
 	
 	public void setA(double a){

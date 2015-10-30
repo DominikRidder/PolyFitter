@@ -79,7 +79,7 @@ public class LowestSquare implements FitterAlgorithm {
 		for (Point c : pointcloud) {
 			float[] b = new float[c.getDimension()];
 			for (int i = 0; i < c.getDimension(); i++) {
-				b[i] = (float) c.getElementbyNumber(i);
+				b[i] = (float) Math.log(c.getElementbyNumber(i));
 			}
 			a[index++] = b;
 		}
@@ -119,12 +119,12 @@ public class LowestSquare implements FitterAlgorithm {
 
 		x = C;
 
-		printMatrix("A", A);
-		printMatrix("b", b);
-		printMatrix("x", x);
+//		printMatrix("A", A);
+//		printMatrix("b", b);
+//		printMatrix("x", x);
 		
 		double values[] = x.getColumn(0);
-		givenFunction.setA(values[1]);
+		givenFunction.setA(Math.pow(Math.E, values[1]));
 		givenFunction.setB(values[0]);
 		return x.getColumn(0);
 	}
