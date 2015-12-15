@@ -2,8 +2,6 @@ package fitterAlgorithm;
 
 import java.util.ArrayList;
 
-import org.apache.commons.math3.linear.BlockRealMatrix;
-import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -79,7 +77,7 @@ public class LowestSquare implements FitterAlgorithm {
 		for (Point c : pointcloud) {
 			float[] b = new float[c.getDimension()];
 			for (int i = 0; i < c.getDimension(); i++) {
-				b[i] = (float) Math.log(c.getElementbyNumber(i));
+				b[i] = (float) c.getElementbyNumber(i);
 			}
 			a[index++] = b;
 		}
@@ -103,78 +101,36 @@ public class LowestSquare implements FitterAlgorithm {
 	 * Uses the formula: x = (AT * A)^-1 * (AT*b). This way the Problem become
 	 * minimal.
 	 */
-	public double[] fit(float[][] points){
+	public void fit(float[][] points){
+		int n = points.length;
 		
-		setUpAandB(points);
-
-		RealMatrix AT = A.transpose();
+		/******* Sums **********/
+		double sumx2y = 0; // sum((x^2) * y)
+		double sumylny = 0; // sum(y*ln(y))
+		double sumxy = 0; // sum(x*y)
+		double sumxylny = 0; // sum(x*y*ln(y))
+		double sumy = 0; // sum(y)
 		
-		RealMatrix C = AT.multiply(A);
-
-		C = new QRDecomposition(C).getSolver().getInverse();
-		
-		RealMatrix D = AT.multiply(b);
-
-		C = C.multiply(D);
-
-		x = C;
-
-//		printMatrix("A", A);
-//		printMatrix("b", b);
-//		printMatrix("x", x);
-		
-		double values[] = x.getColumn(0);
-		givenFunction.setA(Math.pow(Math.E, values[1]));
-		givenFunction.setB(values[0]);
-		return x.getColumn(0);
-	}
-	
-	private void setUpAandB(float[][] points) {
-		int numberofpoints = points.length;
-		if (points[0].length <3){
-			double[][] a = new double[numberofpoints][degree + 1];
-			double[][] B = new double[numberofpoints][1];
-			int i = 0;
-			for (int c = 0; c < numberofpoints; c++) {
-				B[i][0] = points[i][points[0].length - 1];
-				for (int j = degree; j >= 0; j--) {
-					a[i][degree - j] = Math.pow(points[i][0], j);
-				}
-				i++;
-			}
-
-			A = new BlockRealMatrix(a);
-
-			b = new BlockRealMatrix(B);
-		}else{
-			int counter = 0;
-			for (int x = degree; x >= 0; x--) {
-				for (int y = degree; y >= 0; y--) {
-					counter++;
-				}
-			}
-
-			double[][] a = new double[numberofpoints][counter];
-			double[][] B = new double[numberofpoints][1];
-
-			int pos;
-
-			for (int j = 0; j < numberofpoints; j++) {
-				B[j][0] = points[j][2];
-				pos = 0;
-				for (int x = degree; x >= 0; x--) {
-					for (int y = degree; y >= 0; y--) {
-						a[j][pos++] = Math.pow(points[j][0], x)
-								* Math.pow(points[j][1], y);
-					}
-				}
-			}
-
-			A = new BlockRealMatrix(a);
-
-			b = new BlockRealMatrix(B);
+		for (int i=0; i<n; i++){
+			float xi = points[i][0];
+			float yi = points[i][1];
+			
+			sumx2y += xi*xi*yi;
+			sumylny += yi*Math.log(yi);
+			sumxy += xi*yi;
+			sumxylny += xi*yi*Math.log(yi);
+			sumy += yi;
 		}
+		/***********************/
 		
+		double a = (sumx2y*sumylny-sumxy*sumxylny)/(sumy*sumx2y-sumxy*sumxy);
+		
+		double B = (sumy*sumxylny-sumxy*sumylny)/(sumy*sumx2y-sumxy*sumxy);
+		
+		double A = Math.pow(Math.E, a);
+		
+		givenFunction.setA(A);
+		givenFunction.setB(B);
 	}
 
 }

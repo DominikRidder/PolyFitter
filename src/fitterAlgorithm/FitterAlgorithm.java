@@ -11,5 +11,5 @@ public interface FitterAlgorithm {
 	double getProblem();
 	void setMaxIterations(int i);
 	void setDegree(int d);
-	Function fit(ArrayList<Point> pointcloud, Function f);
+	Function fit(ArrayList<float[]> pointcloud, Function f);
 }

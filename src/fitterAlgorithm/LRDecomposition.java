@@ -152,11 +152,11 @@ public class LRDecomposition implements FitterAlgorithm {
 			xi = (y.getEntry(i, 0)-xi)/R.getEntry(i, i);
 			polynom.setEntry(i, 0, xi);
 		}
-		printMatrix("A", A);
-		printMatrix("R", R);
-		printMatrix("L", L);
-		printMatrix("y", y);
-		printMatrix("polynom", polynom);
+//		printMatrix("A", A);
+//		printMatrix("R", R);
+//		printMatrix("L", L);
+//		printMatrix("y", y);
+//		printMatrix("polynom", polynom);
 		return polynom.getColumn(0);
 	}
 

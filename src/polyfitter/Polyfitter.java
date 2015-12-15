@@ -41,7 +41,7 @@ public class Polyfitter {
 	/**
 	 * set of points, that the polynom should nearly fit
 	 */
-	private ArrayList<Point> pointcloud;
+	private ArrayList<float[]> pointcloud;
 
 	/**
 	 * to check if new Points match up to the old one
@@ -78,8 +78,8 @@ public class Polyfitter {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ArrayList<Point> getPointcloud() {
-		return (ArrayList<Point>) pointcloud.clone();
+	public ArrayList<float[]> getPointcloud() {
+		return (ArrayList<float[]>) pointcloud.clone();
 	}
 
 	/**
@@ -88,12 +88,12 @@ public class Polyfitter {
 	 * @param p
 	 * @return
 	 */
-	public double getValue(Point p) {
-		switch (p.getDimension()) {
+	public double getValue(float[] p) {
+		switch (p.length) {
 		case 1:
-			return getValue(p.getElementbyNumber(0));
+			return getValue(p[0]);
 		case 2:
-			return getValue3d(p.getElementbyNumber(0), p.getElementbyNumber(1));
+			return getValue3d(p[0], p[1]);
 		default:
 			return 0;
 		}
@@ -222,23 +222,10 @@ public class Polyfitter {
 
 	public void addPoints(float[][] pointcloud) {
 		if (this.pointcloud == null) {
-			this.pointcloud = new ArrayList<Point>();
+			this.pointcloud = new ArrayList<float[]>();
 		}
-		int dim = pointcloud[0].length;
 		for (float[] a : pointcloud) {
-			switch (dim) {
-			case 1:
-				this.pointcloud.add(new Point1D(a[0]));
-				break;
-			case 2:
-				this.pointcloud.add(new Point2D(a[0], a[1]));
-				break;
-			case 3:
-				this.pointcloud.add(new Point3D(a[0], a[1], a[2]));
-				break;
-			default:
-				break;
-			}
+			this.pointcloud.add(a);
 		}
 	}
 
@@ -302,7 +289,8 @@ public class Polyfitter {
 					.println("Setting degree = 0, because the fit would not make sense with higher degree right here.");
 			algo.setDegree(0);
 		}
-		return useOptimasation(pointcloud);
+//		return useOptimasation(pointcloud);
+		return algo.fit(pointcloud, f);
 	}
 
 	/**
@@ -336,7 +324,7 @@ public class Polyfitter {
 	 */
 	private Function fithelp() {
 		Vector<Integer> copyv = v;
-		ArrayList<Point> copyp = pointcloud;
+		ArrayList<float[]> copyp = pointcloud;
 		int copyd = dimension;
 
 		dimension = v.size();
@@ -404,7 +392,7 @@ public class Polyfitter {
 				}
 				break;
 			}
-			Point p = pointcloud.get(pointcloud.size() - 1);
+			float[] p = pointcloud.get(pointcloud.size() - 1);
 			pointcloud.remove(pointcloud.size() - 1);
 			algo.fit(pointcloud, f);
 			double problem2 = algo.getProblem();
@@ -495,17 +483,16 @@ public class Polyfitter {
 	 * 
 	 * @return
 	 */
-	private ArrayList<Point> getPointsToFit() {
-		Integer[] a = new Integer[0];
-		ArrayList<Point> tofit = new ArrayList<Point>();
-		for (Point p : pointcloud) {
-			PointND pnd = new PointND();
-			for (Integer att : v.toArray(a)) {
-				pnd.addElement(p.getElementbyNumber(att));
-			}
-			tofit.add(pnd);
-		}
-		return tofit;
+	private ArrayList<float[]> getPointsToFit() {
+//		Integer[] a = new Integer[0];
+//		ArrayList<float[]> tofit = new ArrayList<float[]>();
+//		for (float[] p : pointcloud) {
+//			for (Integer att : v.toArray(a)) {
+//				pnd.addElement(p.getElementbyNumber(att));
+//			}
+//			tofit.add(pnd);
+//		}
+		return getPointcloud();
 	}
 
 	public void plot() {
@@ -534,7 +521,7 @@ public class Polyfitter {
 	 */
 	private void plothelp(boolean b) {
 		Vector<Integer> copyv = v;
-		ArrayList<Point> copyp = pointcloud;
+		ArrayList<float[]> copyp = pointcloud;
 		int copyd = dimension;
 
 		dimension = v.size();
@@ -587,11 +574,11 @@ public class Polyfitter {
 		}
 		if (pointcloud != null) {
 			str += "\n";
-			for (Point point : pointcloud) {
-				for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
-					str += "\t" + point.getElementbyNumber(j) + "\t|";
+			for (float[] point : pointcloud) {
+				for (int j = 0; j < pointcloud.get(0).length; j++) {
+					str += "\t" + point[j] + "\t|";
 				}
-				str += "\t" + getValue(point.getElementbyNumber(0)) + "\n";
+				str += "\t" + getValue(point[0]) + "\n";
 			}
 		} else {
 			str += "No Points are given\n";
@@ -612,7 +599,7 @@ public class Polyfitter {
 	 */
 	private String toStringhelp() {
 		Vector<Integer> copyv = v;
-		ArrayList<Point> copyp = pointcloud;
+		ArrayList<float[]> copyp = pointcloud;
 		int copyd = dimension;
 
 		dimension = v.size();
@@ -635,13 +622,13 @@ public class Polyfitter {
 	 */
 	private String String3d() {
 		String str = "";
-		for (Point pointcloud1 : pointcloud) {
-			for (int j = 0; j < pointcloud.get(0).getDimension(); j++) {
-				str += "\t" + pointcloud1.getElementbyNumber(j) + "\t|";
+		for (float[] pointcloud1 : pointcloud) {
+			for (int j = 0; j < pointcloud.get(0).length; j++) {
+				str += "\t" + pointcloud1[j] + "\t|";
 			}
 			str += "\t"
-					+ getValue3d(pointcloud1.getElementbyNumber(0),
-							pointcloud1.getElementbyNumber(1)) + "\n";
+					+ getValue3d(pointcloud1[0],
+							pointcloud1[1]) + "\n";
 		}
 		str += "Problem: ";
 		if (algo.getProblem() < 0) {
@@ -691,12 +678,12 @@ public class Polyfitter {
 		} catch (IOException e) {
 		}
 		if (pointcloud == null) {
-			pointcloud = new ArrayList<Point>();
+			pointcloud = new ArrayList<float[]>();
 		}
 		for (float[] a : points) {
-			pointcloud.add(floatToPoint(a));
+			pointcloud.add(a);
 		}
-		dimensionequal(pointcloud.get(0).getDimension());
+		dimensionequal(pointcloud.get(0).length);
 	}
 
 	/**
@@ -758,8 +745,8 @@ public class Polyfitter {
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
-		for (Point a : pointcloud) {
-			x[i] = a.getElementbyNumber(0);
+		for (float[] a : pointcloud) {
+			x[i] = a[0];
 			if (x[i] >= xmax) {
 				xmax = (int) x[i] + 2;
 			} else if (x[i] <= xmin) {
@@ -796,15 +783,15 @@ public class Polyfitter {
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
-		for (Point a : pointcloud) {
-			x[i] = a.getElementbyNumber(0);
+		for (float[] a : pointcloud) {
+			x[i] = a[0];
 			if (x[i] + 2 >= xmax) {
 				xmax = (int) x[i] + 2;
 			}
 			if (x[i] - 1 <= xmin) {
 				xmin = (int) x[i] - 1;
 			}
-			y[i] = a.getElementbyNumber(1);
+			y[i] = a[1];
 			if (y[i] + 2 >= ymax) {
 				ymax = (int) y[i] + 2;
 			}
@@ -834,37 +821,37 @@ public class Polyfitter {
 	/**
 	 * Method to Plot a 2 Dimensional function.
 	 */
-	public BufferedImage plotVolume(boolean logScale) {
+	public BufferedImage plotVolume(boolean logScale, int width, int height) {
 		Plot p = new Plot("PolyFitter", "Echo Nr.", "GrayScale");
 		p.setFont(new Font(null, Font.BOLD, 20));
-		p.setFrameSize(300, 300);
+		p.setFrameSize(width, height);
 		p.setColor(logScale ? Color.BLUE : Color.black);
 		fit();
 		removeBadPoints();
 		fit();
 		
-		int xmin = 0;
-		int xmax = 0;
-		int ymin = 300;
-		int ymax = 0;
+		int xmin = Integer.MAX_VALUE;
+		int xmax = Integer.MIN_VALUE;
+		int ymin = Integer.MAX_VALUE;
+		int ymax = Integer.MIN_VALUE;
 		double dx = 0.01;
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
-		for (Point a : pointcloud) {
-			x[i] = a.getElementbyNumber(0);
+		for (float[] a : pointcloud) {
+			x[i] = a[0];
 			if (x[i] >= xmax) {
 				xmax = (int) x[i] + 1;
 			}
 			if (x[i] - 1 <= xmin) {
 				xmin = (int) x[i] - 1;
 			}
-			y[i] = a.getElementbyNumber(1);
+			y[i] = a[1];
 			if (y[i] >= ymax) {
 				ymax = (int) y[i] + 1;
 			}
 			if (y[i] - 1 <= ymin) {
-				ymin = (int) (y[i]);
+				ymin = (int) (y[i]) - 2;
 			}
 			i++;
 		}
@@ -876,8 +863,8 @@ public class Polyfitter {
 //				ymin = (int) getValue(a + dx) - 1;
 //			}
 //		}
-		ymin*=0.9;
-		ymax*=1.1;
+//		ymin*=0.9;
+//		ymax*=1.1;
 		p.setLimits(xmin, xmax, ymin, ymax);
 		p.setLineWidth(3);
 		p.addPoints(x, y, Plot.X);
@@ -935,18 +922,18 @@ public class Polyfitter {
 		double miny = 100000;
 		double maxx = 1;
 		double maxy = 1;
-		for (Point p : pointcloud) {
-			if (p.getElementbyNumber(0) < minx) {
-				minx = p.getElementbyNumber(0);
+		for (float[] p : pointcloud) {
+			if (p[0] < minx) {
+				minx = p[0];
 			}
-			if (p.getElementbyNumber(1) < miny) {
-				miny = p.getElementbyNumber(1);
+			if (p[1] < miny) {
+				miny = p[1];
 			}
-			if (p.getElementbyNumber(0) > maxx) {
-				maxx = p.getElementbyNumber(0);
+			if (p[0] > maxx) {
+				maxx = p[0];
 			}
-			if (p.getElementbyNumber(1) > maxy) {
-				maxy = p.getElementbyNumber(1);
+			if (p[1] > maxy) {
+				maxy = p[1];
 			}
 		}
 		if (minx == 0) {
@@ -1044,18 +1031,18 @@ public class Polyfitter {
 
 	}
 
-	public void addPoint(Point point) {
-		if (point.getDimension() == 0) {
-			System.out
-					.println("You cannot put an empty point into the pointcloud.");
-			return;
-		}
-		if (pointcloud == null) {
-			dimension = point.getDimension();
-			pointcloud = new ArrayList<Point>();
-		}
-		pointcloud.add(point);
-	}
+//	public void addPoint(Point point) {
+//		if (point.getDimension() == 0) {
+//			System.out
+//					.println("You cannot put an empty point into the pointcloud.");
+//			return;
+//		}
+//		if (pointcloud == null) {
+//			dimension = point.getDimension();
+//			pointcloud = new ArrayList<Point>();
+//		}
+//		pointcloud.add(point);
+//	}
 
 	public void plot(boolean plot3d) {
 		if (v != null) {
@@ -1120,14 +1107,14 @@ public class Polyfitter {
 	
 	public void removeBadPoints(){
 		double averagedecay = 0;
-		for (Point p: pointcloud){
-			averagedecay+= Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1));
+		for (float[] p: pointcloud){
+			averagedecay+= Math.abs(getValue(p[0])-p[1]);
 		}
 		averagedecay/=pointcloud.size();
 		
 		for (int i=0; i<pointcloud.size() && pointcloud.size()>3; i++){
-			Point p = pointcloud.get(i);
-			if (Math.abs(getValue(p.getElementbyNumber(0))-p.getElementbyNumber(1)) > averagedecay+10){
+			float[] next = pointcloud.get(i);
+			if (Math.abs(getValue(next[0])-next[1]) > averagedecay+10){
 				pointcloud.remove(i--);
 //				System.out.println("removed point "+i);
 			}

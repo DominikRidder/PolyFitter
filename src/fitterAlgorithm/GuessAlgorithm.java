@@ -22,10 +22,6 @@ public class GuessAlgorithm implements FitterAlgorithm {
 
 	private boolean degreeset;
 
-	// I dont know, how the iterations fits into the algorithm. They are not
-	// used yet.
-	// private int iterations;
-
 	public GuessAlgorithm() {
 		degreeset = false;
 	}
