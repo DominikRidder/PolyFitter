@@ -66,16 +66,11 @@ public class GuessAlgorithm implements FitterAlgorithm {
 	public void setMaxIterations(int i) {
 	}
 
-	public Function fit(ArrayList<Point> pointcloud, Function f) {
-		float[][] a = new float[pointcloud.size()][pointcloud.get(0)
-				.getDimension()];
+	public Function fit(ArrayList<float[]> pointcloud, Function f) {
+		float[][] a = new float[pointcloud.size()][pointcloud.get(0).length];
 		int index = 0;
-		for (Point c : pointcloud) {
-			float[] b = new float[c.getDimension()];
-			for (int i = 0; i < c.getDimension(); i++) {
-				b[i] = (float) c.getElementbyNumber(i);
-			}
-			a[index++] = b;
+		for (float[] c : pointcloud) {
+			a[index++] = c;
 		}
 		fit(a);
 		return getFunction();

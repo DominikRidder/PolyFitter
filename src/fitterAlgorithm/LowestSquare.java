@@ -1,5 +1,6 @@
 package fitterAlgorithm;
 
+import java.net.StandardSocketOptions;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.linear.RealMatrix;
@@ -44,10 +45,9 @@ public class LowestSquare implements FitterAlgorithm {
 	@Override
 	public double getProblem() {
 		if (x == null) {
-			System.out
-					.println("You have to perform the fit method before you can get a problem.");
 			return -1;
 		}
+		
 		double prob = 0;
 		RealMatrix C = A.multiply(x).subtract(b);
 		RealVector D = C.getColumnVector(0);
@@ -69,17 +69,13 @@ public class LowestSquare implements FitterAlgorithm {
 	}
 
 	@Override
-	public Function fit(ArrayList<Point> pointcloud, Function f) {
+	public Function fit(ArrayList<float[]> pointcloud, Function f) {
 		this.givenFunction = (ExponentialFunction) f;
 		float[][] a = new float[pointcloud.size()][pointcloud.get(0)
-				.getDimension()];
+				.length];
 		int index = 0;
-		for (Point c : pointcloud) {
-			float[] b = new float[c.getDimension()];
-			for (int i = 0; i < c.getDimension(); i++) {
-				b[i] = (float) c.getElementbyNumber(i);
-			}
-			a[index++] = b;
+		for (float[] c : pointcloud) {
+			a[index++] = c;
 		}
 		fit(a);
 
@@ -122,6 +118,12 @@ public class LowestSquare implements FitterAlgorithm {
 			sumy += yi;
 		}
 		/***********************/
+//		
+//		System.out.println("sumx2y = "+sumx2y);
+//		System.out.println("sumylny = "+sumylny);
+//		System.out.println("sumxy = "+sumxy);
+//		System.out.println("sumxylny = "+sumxylny);
+//		System.out.println("sumy = "+sumy);
 		
 		double a = (sumx2y*sumylny-sumxy*sumxylny)/(sumy*sumx2y-sumxy*sumxy);
 		

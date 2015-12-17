@@ -38,7 +38,7 @@ public class HarmonicFitter implements FitterAlgorithm{
 	}
 
 	@Override
-	public Function fit(ArrayList<Point> pointcloud, Function f) {
+	public Function fit(ArrayList<float[]> pointcloud, Function f) {
 		// TODO Auto-generated method stub
 		return null;
 	}

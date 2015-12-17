@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Vector;
@@ -109,7 +110,7 @@ public class Polyfitter {
 	 * @param d
 	 * @return
 	 */
-	private double getValue(double d) {
+	public double getValue(double d) {
 		f = algo.getFunction();
 		return f.f(d);
 	}
@@ -199,10 +200,10 @@ public class Polyfitter {
 		this.algo = algo;
 	}
 
-	public void removeAlgorithm(){
+	public void removeAlgorithm() {
 		this.algo = null;
 	}
-	
+
 	public void setPoints(String path) {
 		pointcloud = null;
 		dimension = 0;
@@ -289,7 +290,7 @@ public class Polyfitter {
 					.println("Setting degree = 0, because the fit would not make sense with higher degree right here.");
 			algo.setDegree(0);
 		}
-//		return useOptimasation(pointcloud);
+		// return useOptimasation(pointcloud);
 		return algo.fit(pointcloud, f);
 	}
 
@@ -349,7 +350,7 @@ public class Polyfitter {
 	 * @param pointcloud
 	 * @return
 	 */
-	private Function useOptimasation(ArrayList<Point> pointcloud) {
+	private Function useOptimasation(ArrayList<float[]> pointcloud) {
 		boolean ausgabe = false;
 		for (Optimize o : optimize) {
 			switch (o.command) {
@@ -484,14 +485,14 @@ public class Polyfitter {
 	 * @return
 	 */
 	private ArrayList<float[]> getPointsToFit() {
-//		Integer[] a = new Integer[0];
-//		ArrayList<float[]> tofit = new ArrayList<float[]>();
-//		for (float[] p : pointcloud) {
-//			for (Integer att : v.toArray(a)) {
-//				pnd.addElement(p.getElementbyNumber(att));
-//			}
-//			tofit.add(pnd);
-//		}
+		// Integer[] a = new Integer[0];
+		// ArrayList<float[]> tofit = new ArrayList<float[]>();
+		// for (float[] p : pointcloud) {
+		// for (Integer att : v.toArray(a)) {
+		// pnd.addElement(p.getElementbyNumber(att));
+		// }
+		// tofit.add(pnd);
+		// }
 		return getPointcloud();
 	}
 
@@ -541,19 +542,19 @@ public class Polyfitter {
 	 * the problem of the fit.
 	 */
 	public String toString() {
-
 		if (v != null) {
 			return toStringhelp();
 		}
-
-		String str = "Algorithm: ";
-
-		if (algo == null) {
-			str += "<not set>";
-		} else {
-			str += algo.getClass().getName();
-		}
-		str += "\n";
+		DecimalFormat df = new DecimalFormat("#.###");
+		String str = "";
+		// String str = "Algorithm: ";
+		//
+		// if (algo == null) {
+		// str += "<not set>";
+		// } else {
+		// str += algo.getClass().getName();
+		// }
+		// str += "\n";
 
 		str += "Polynom: " + getPolynomRepresentation() + "\n";
 
@@ -576,9 +577,9 @@ public class Polyfitter {
 			str += "\n";
 			for (float[] point : pointcloud) {
 				for (int j = 0; j < pointcloud.get(0).length; j++) {
-					str += "\t" + point[j] + "\t|";
+					str += "\t" + df.format(point[j]) + "\t|";
 				}
-				str += "\t" + getValue(point[0]) + "\n";
+				str += "\t" + df.format(getValue(point[0])) + "\n";
 			}
 		} else {
 			str += "No Points are given\n";
@@ -587,8 +588,9 @@ public class Polyfitter {
 		if (algo.getProblem() < 0) {
 			str += "<<not set>>";
 		} else {
-			str += algo.getProblem();
+			str += df.format(algo.getProblem());
 		}
+		str += "\n";
 		return str;
 	}
 
@@ -626,9 +628,7 @@ public class Polyfitter {
 			for (int j = 0; j < pointcloud.get(0).length; j++) {
 				str += "\t" + pointcloud1[j] + "\t|";
 			}
-			str += "\t"
-					+ getValue3d(pointcloud1[0],
-							pointcloud1[1]) + "\n";
+			str += "\t" + getValue3d(pointcloud1[0], pointcloud1[1]) + "\n";
 		}
 		str += "Problem: ";
 		if (algo.getProblem() < 0) {
@@ -829,7 +829,8 @@ public class Polyfitter {
 		fit();
 		removeBadPoints();
 		fit();
-		
+		System.out.println(this);
+
 		int xmin = Integer.MAX_VALUE;
 		int xmax = Integer.MIN_VALUE;
 		int ymin = Integer.MAX_VALUE;
@@ -855,22 +856,22 @@ public class Polyfitter {
 			}
 			i++;
 		}
-//		for (double a = xmin; a + dx < xmax; a += dx) {
-//			if (getValue(a + dx) + 2 > ymax) {
-//				ymax = (int) getValue(a + dx) + 2;
-//			}
-//			if (getValue(a + dx) - 1 < ymin) {
-//				ymin = (int) getValue(a + dx) - 1;
-//			}
-//		}
-//		ymin*=0.9;
-//		ymax*=1.1;
+		// for (double a = xmin; a + dx < xmax; a += dx) {
+		// if (getValue(a + dx) + 2 > ymax) {
+		// ymax = (int) getValue(a + dx) + 2;
+		// }
+		// if (getValue(a + dx) - 1 < ymin) {
+		// ymin = (int) getValue(a + dx) - 1;
+		// }
+		// }
+		// ymin*=0.9;
+		// ymax*=1.1;
 		p.setLimits(xmin, xmax, ymin, ymax);
 		p.setLineWidth(3);
 		p.addPoints(x, y, Plot.X);
 		p.setLineWidth(2);
 		double a;
-		int changed=0;
+		int changed = 0;
 		for (a = xmin; a + dx <= xmax; a += dx) {
 			changed = 0;
 			double y1 = getValue(a);
@@ -889,12 +890,12 @@ public class Polyfitter {
 				y2 = ymax;
 				changed++;
 			}
-			if (changed == 2){
+			if (changed == 2) {
 				continue;
 			}
 			p.drawLine(a, y1, a + dx, y2);
 		}
-		
+
 		p.draw();
 		return p.getImagePlus().getBufferedImage();
 	}
@@ -1031,18 +1032,18 @@ public class Polyfitter {
 
 	}
 
-//	public void addPoint(Point point) {
-//		if (point.getDimension() == 0) {
-//			System.out
-//					.println("You cannot put an empty point into the pointcloud.");
-//			return;
-//		}
-//		if (pointcloud == null) {
-//			dimension = point.getDimension();
-//			pointcloud = new ArrayList<Point>();
-//		}
-//		pointcloud.add(point);
-//	}
+	// public void addPoint(Point point) {
+	// if (point.getDimension() == 0) {
+	// System.out
+	// .println("You cannot put an empty point into the pointcloud.");
+	// return;
+	// }
+	// if (pointcloud == null) {
+	// dimension = point.getDimension();
+	// pointcloud = new ArrayList<Point>();
+	// }
+	// pointcloud.add(point);
+	// }
 
 	public void plot(boolean plot3d) {
 		if (v != null) {
@@ -1104,19 +1105,19 @@ public class Polyfitter {
 			epsilon = ep;
 		}
 	}
-	
-	public void removeBadPoints(){
+
+	public void removeBadPoints() {
 		double averagedecay = 0;
-		for (float[] p: pointcloud){
-			averagedecay+= Math.abs(getValue(p[0])-p[1]);
+		for (float[] p : pointcloud) {
+			averagedecay += Math.abs(getValue(p[0]) - p[1]);
 		}
-		averagedecay/=pointcloud.size();
-		
-		for (int i=0; i<pointcloud.size() && pointcloud.size()>3; i++){
+		averagedecay /= pointcloud.size();
+
+		for (int i = 0; i < pointcloud.size() && pointcloud.size() > 3; i++) {
 			float[] next = pointcloud.get(i);
-			if (Math.abs(getValue(next[0])-next[1]) > averagedecay+10){
+			if (Math.abs(getValue(next[0]) - next[1]) > averagedecay + 10) {
 				pointcloud.remove(i--);
-//				System.out.println("removed point "+i);
+				// System.out.println("removed point "+i);
 			}
 		}
 	}

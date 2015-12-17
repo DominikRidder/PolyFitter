@@ -70,20 +70,34 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	public void setMaxIterations(int i) {
 	}
 
-	public Function fit(ArrayList<Point> pointcloud, Function f) {
-		float[][] a = new float[pointcloud.size()][pointcloud.get(0)
-				.getDimension()];
-		int index = 0;
-		for (Point c : pointcloud) {
-			float[] b = new float[c.getDimension()];
-			for (int i = 0; i < c.getDimension(); i++) {
-				b[i] = (float) c.getElementbyNumber(i);
-			}
-			a[index++] = b;
-		}
-		fit(a);
-
+	public Function fit(ArrayList<float[]> pointcloud, Function f) {
+//		float[][] a = new float[0][0];
+//		a = pointcloud.toArray(a);
+//		fit(a);
+		
+		setUpAandB(pointcloud);
+		QRDecomposition comp = new QRDecomposition(A);
+		polynom = comp.getSolver().solve(b);
+		
 		return getFunction();
+	}
+
+	private void setUpAandB(ArrayList<float[]> pointcloud) {
+		int numberofpoints = pointcloud.size();
+		double[][] a = new double[numberofpoints][degree + 1];
+		double[][] B = new double[numberofpoints][1];
+		int i = 0;
+		for (int c = 0; c < numberofpoints; c++) {
+			B[i][0] = pointcloud.get(i)[pointcloud.get(0).length - 1];
+			for (int j = degree; j >= 0; j--) {
+				a[i][degree - j] = Math.pow(pointcloud.get(i)[0], j);
+			}
+			i++;
+		}
+		
+		A = new BlockRealMatrix(a);
+
+		b = new BlockRealMatrix(B);
 	}
 
 	/**
@@ -92,19 +106,6 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	 */
 	public double[] fit(float[][] points){
 		setUpAandB(points);
-
-//		RealMatrix AT = A.transpose();
-//		
-//		RealMatrix C = AT.multiply(A);
-//
-//		C = new QRDecomposition(C).getSolver().getInverse();
-//		
-//
-//		RealMatrix D = AT.multiply(b);
-//
-//		C = C.multiply(D);
-//
-//		polynom = C;
 		
 		QRDecomposition comp = new QRDecomposition(A);
 		polynom = comp.getSolver().solve(b);
@@ -113,7 +114,6 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	
 	private void setUpAandB(float[][] points) {
 		int numberofpoints = points.length;
-//		if (points[0].length <3){
 			double[][] a = new double[numberofpoints][degree + 1];
 			double[][] B = new double[numberofpoints][1];
 			int i = 0;
@@ -128,35 +128,6 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 			A = new BlockRealMatrix(a);
 
 			b = new BlockRealMatrix(B);
-//		}
-//		else{
-//			int counter = 0;
-//			for (int x = degree; x >= 0; x--) {
-//				for (int y = degree; y >= 0; y--) {
-//					counter++;
-//				}
-//			}
-//
-//			double[][] a = new double[numberofpoints][counter];
-//			double[][] B = new double[numberofpoints][1];
-//
-//			int pos;
-//
-//			for (int j = 0; j < numberofpoints; j++) {
-//				B[j][0] = points[j][2];
-//				pos = 0;
-//				for (int x = degree; x >= 0; x--) {
-//					for (int y = degree; y >= 0; y--) {
-//						a[j][pos++] = Math.pow(points[j][0], x)
-//								* Math.pow(points[j][1], y);
-//					}
-//				}
-//			}
-//
-//			A = new BlockRealMatrix(a);
-//
-//			b = new BlockRealMatrix(B);
-//		}
 		
 	}
 }

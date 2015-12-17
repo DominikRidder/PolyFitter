@@ -1,5 +1,7 @@
 package functions;
 
+import java.text.DecimalFormat;
+
 public class PolynomialFunction2D implements Function{
 
 	double[] polynom;
@@ -28,9 +30,10 @@ public class PolynomialFunction2D implements Function{
 	
 	
 	public String toString(){
+		DecimalFormat df = new DecimalFormat("#.###");
 		StringBuilder str = new StringBuilder();
 		for (int i=0; i<polynom.length; i++){
-			str.append(polynom[i]+"x^"+(polynom.length-1-i)+" ");
+			str.append(df.format(polynom[i])+"x^"+(polynom.length-1-i)+" ");
 			if (i!= polynom.length-1){
 				str.append("+");
 			}
