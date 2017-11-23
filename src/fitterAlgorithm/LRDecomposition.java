@@ -6,7 +6,6 @@ import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import polyfitter.Point;
 import functions.Function;
 import functions.PolynomialFunction2D;
 
@@ -23,10 +22,6 @@ public class LRDecomposition implements FitterAlgorithm {
 	private RealMatrix L;
 
 	private int degree;
-
-	// I dont know, how the iterations fits into the algorithm. They are not
-	// used yet.
-	// private int iterations;
 
 	public LRDecomposition(int degree) {
 		this.degree = degree;
@@ -54,8 +49,8 @@ public class LRDecomposition implements FitterAlgorithm {
 		}
 		double[] d = polynom.getColumn(0);
 		double[] rev = new double[d.length];
-		for (int i=0; i<rev.length; i++){
-			rev[rev.length-1-i] = d[i];
+		for (int i = 0; i < rev.length; i++) {
+			rev[rev.length - 1 - i] = d[i];
 		}
 		return new PolynomialFunction2D(rev);
 	}
@@ -77,8 +72,7 @@ public class LRDecomposition implements FitterAlgorithm {
 	}
 
 	public Function fit(ArrayList<float[]> pointcloud, Function f) {
-		float[][] a = new float[pointcloud.size()][pointcloud.get(0)
-				.length];
+		float[][] a = new float[pointcloud.size()][pointcloud.get(0).length];
 		int index = 0;
 		for (float[] c : pointcloud) {
 			a[index++] = c;
@@ -98,16 +92,16 @@ public class LRDecomposition implements FitterAlgorithm {
 
 		if (R == null) {
 			R = new BlockRealMatrix(A.getData());
-			int n = degree+1;
+			int n = degree + 1;
 			L = new BlockRealMatrix(n, n);
-			for (int i=0; i<n; i++){
+			for (int i = 0; i < n; i++) {
 				L.setEntry(i, i, 1);
 			}
 
 			// n-1 Iterationsschritte
 			for (int i = 0; i < n - 1; i++) {
 				// Zeilen der Restmatrix werden durchlaufen
-				for (int k = i+1; k < n; k++) {
+				for (int k = i + 1; k < n; k++) {
 					// Berechnung von L
 					L.setEntry(k, i, R.getEntry(k, i) / R.getEntry(i, i));// Achtung:
 																			// vorher
@@ -125,48 +119,49 @@ public class LRDecomposition implements FitterAlgorithm {
 			}
 		}
 
-		int n = degree+1;
-		
+		int n = degree + 1;
+
 		polynom = new BlockRealMatrix(n, 1);
 
 		RealMatrix y = new BlockRealMatrix(n, 1);
-		
-		for (int i = 0; i<n; i++){
+
+		for (int i = 0; i < n; i++) {
 			double yi = 0;
-			for (int k= 0; k<i; k++){
-				yi += L.getEntry(i, k) * y.getEntry(k, 0); 
+			for (int k = 0; k < i; k++) {
+				yi += L.getEntry(i, k) * y.getEntry(k, 0);
 			}
-			yi = (b.getEntry(i, 0)-yi)/L.getEntry(i, i);
+			yi = (b.getEntry(i, 0) - yi) / L.getEntry(i, i);
 			y.setEntry(i, 0, yi);
 		}
-		
-		for (int i = n-1; i>=0; i--){
+
+		for (int i = n - 1; i >= 0; i--) {
 			double xi = 0;
-			for (int k= 1; k<n; k++){
-				xi += R.getEntry(i, k) * polynom.getEntry(k, 0); 
+			for (int k = 1; k < n; k++) {
+				xi += R.getEntry(i, k) * polynom.getEntry(k, 0);
 			}
-			xi = (y.getEntry(i, 0)-xi)/R.getEntry(i, i);
+			xi = (y.getEntry(i, 0) - xi) / R.getEntry(i, i);
 			polynom.setEntry(i, 0, xi);
 		}
-//		printMatrix("A", A);
-//		printMatrix("R", R);
-//		printMatrix("L", L);
-//		printMatrix("y", y);
-//		printMatrix("polynom", polynom);
+		// printMatrix("A", A);
+		// printMatrix("R", R);
+		// printMatrix("L", L);
+		// printMatrix("y", y);
+		// printMatrix("polynom", polynom);
 		return polynom.getColumn(0);
 	}
 
-	private void printMatrix(String name, RealMatrix brm){
-		System.out.println(name+"{");
-		for (int i=0; i<brm.getRowDimension(); i++){
-			for (int j=0; j<brm.getColumnDimension(); j++){
-				System.out.print(brm.getEntry(i, j)+ ", ");
+	@SuppressWarnings("unused")
+	private void printMatrix(String name, RealMatrix brm) {
+		System.out.println(name + "{");
+		for (int i = 0; i < brm.getRowDimension(); i++) {
+			for (int j = 0; j < brm.getColumnDimension(); j++) {
+				System.out.print(brm.getEntry(i, j) + ", ");
 			}
 			System.out.println();
 		}
 		System.out.println("}");
 	}
-	
+
 	private void setUpAandB(float[][] points) {
 		int numberofpoints = points.length;
 		if (points[0].length < 3) {

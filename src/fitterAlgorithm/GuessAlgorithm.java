@@ -8,7 +8,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import functions.Function;
 import functions.PolynomialFunction2D;
-import polyfitter.Point;
 
 public class GuessAlgorithm implements FitterAlgorithm {
 
@@ -103,11 +102,11 @@ public class GuessAlgorithm implements FitterAlgorithm {
 		}
 		int counter = 0;
 		while (true) {
-			if (counter == A.getColumnDimension()){
+			if (counter == A.getColumnDimension()) {
 				break;
 			}
 			for (int i = A.getColumnDimension() - 1; i >= 0; i--) {
-				if (change[i] == 0){
+				if (change[i] == 0) {
 					counter++;
 					continue;
 				}

@@ -9,7 +9,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import functions.Function;
 import functions.PolynomialFunction2D;
-import polyfitter.Point;
 
 /**
  * This class is an example for an implementation of a FitterAlgorithm.
@@ -23,6 +22,7 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	private RealMatrix polynom;
 
 	private int degree;
+
 	// I dont know, how the iterations fits into the algorithm. They are not
 	// used yet.
 	// private int iterations;
@@ -71,63 +71,75 @@ public class PolynomialLowestSquare implements FitterAlgorithm {
 	}
 
 	public Function fit(ArrayList<float[]> pointcloud, Function f) {
-//		float[][] a = new float[0][0];
-//		a = pointcloud.toArray(a);
-//		fit(a);
-		
+		// float[][] a = new float[0][0];
+		// a = pointcloud.toArray(a);
+		// fit(a);
+
 		setUpAandB(pointcloud);
 		QRDecomposition comp = new QRDecomposition(A);
 		polynom = comp.getSolver().solve(b);
-		
+
 		return getFunction();
 	}
 
 	private void setUpAandB(ArrayList<float[]> pointcloud) {
-		int numberofpoints = pointcloud.size();
+		int numberofpoints = 0;
+		for (int c = 0; c < pointcloud.size(); c++) {
+			if (pointcloud.get(c)[2] == 0) {
+				numberofpoints++;
+			}
+		}
+
+		// int numberofpoints = pointcloud.size();
 		double[][] a = new double[numberofpoints][degree + 1];
 		double[][] B = new double[numberofpoints][1];
 		int i = 0;
-		for (int c = 0; c < numberofpoints; c++) {
-			B[i][0] = pointcloud.get(i)[pointcloud.get(0).length - 1];
+		for (int c = 0; c < pointcloud.size(); c++) {
+			if (pointcloud.get(c)[2] != 0) {
+				continue;
+			}
+			B[i][0] = pointcloud.get(c)[pointcloud.get(0).length - 2];
 			for (int j = degree; j >= 0; j--) {
-				a[i][degree - j] = Math.pow(pointcloud.get(i)[0], j);
+				a[i][degree - j] = Math.pow(pointcloud.get(c)[0], j);
 			}
 			i++;
 		}
-		
+
 		A = new BlockRealMatrix(a);
 
+		// LowestSquare.printMatrix("A", A);
 		b = new BlockRealMatrix(B);
+		// LowestSquare.printMatrix("b", b);
 	}
 
 	/**
 	 * Uses the formula: x = (AT * A)^-1 * (AT*b). This way the Problem become
 	 * minimal.
 	 */
-	public double[] fit(float[][] points){
+	public double[] fit(float[][] points) {
 		setUpAandB(points);
-		
+
 		QRDecomposition comp = new QRDecomposition(A);
 		polynom = comp.getSolver().solve(b);
 		return polynom.getColumn(0);
 	}
-	
+
 	private void setUpAandB(float[][] points) {
 		int numberofpoints = points.length;
-			double[][] a = new double[numberofpoints][degree + 1];
-			double[][] B = new double[numberofpoints][1];
-			int i = 0;
-			for (int c = 0; c < numberofpoints; c++) {
-				B[i][0] = points[i][points[0].length - 1];
-				for (int j = degree; j >= 0; j--) {
-					a[i][degree - j] = Math.pow(points[i][0], j);
-				}
-				i++;
+		double[][] a = new double[numberofpoints][degree + 1];
+		double[][] B = new double[numberofpoints][1];
+		int i = 0;
+		for (int c = 0; c < numberofpoints; c++) {
+			B[i][0] = points[i][points[0].length - 1];
+			for (int j = degree; j >= 0; j--) {
+				a[i][degree - j] = Math.pow(points[i][0], j);
 			}
+			i++;
+		}
 
-			A = new BlockRealMatrix(a);
+		A = new BlockRealMatrix(a);
 
-			b = new BlockRealMatrix(B);
-		
+		b = new BlockRealMatrix(B);
+
 	}
 }

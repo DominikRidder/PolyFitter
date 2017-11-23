@@ -3,9 +3,8 @@ package fitterAlgorithm;
 import java.util.ArrayList;
 
 import functions.Function;
-import polyfitter.Point;
 
-public class HarmonicFitter implements FitterAlgorithm{
+public class HarmonicFitter implements FitterAlgorithm {
 
 	@Override
 	public int getDegree() {
@@ -28,13 +27,13 @@ public class HarmonicFitter implements FitterAlgorithm{
 	@Override
 	public void setMaxIterations(int i) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void setDegree(int d) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

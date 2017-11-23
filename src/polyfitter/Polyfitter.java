@@ -1,9 +1,5 @@
 package polyfitter;
 
-import fitterAlgorithm.FitterAlgorithm;
-import fitterAlgorithm.PolynomialLowestSquare;
-import polyfitter.Point;
-import functions.Function;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -11,8 +7,6 @@ import ij.gui.Plot;
 import ij.plugin.SurfacePlotter;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-
-import javax.swing.JTextField;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,8 +18,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Scanner;
 import java.util.Vector;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+
+import javax.swing.JTextField;
+
+import fitterAlgorithm.FitterAlgorithm;
+import fitterAlgorithm.PolynomialLowestSquare;
+import functions.Function;
 
 public class Polyfitter {
 
@@ -62,7 +66,7 @@ public class Polyfitter {
 	/**
 	 * The optimazationOption can be used to find a smaller Problem.
 	 */
-	public final Optimazation optimazationOptions = new Optimazation(optimize);
+	public final Optimization optimazationOptions = new Optimization(optimize);
 
 	/**
 	 * Default Constructer (doing nothing)
@@ -142,11 +146,11 @@ public class Polyfitter {
 	 * 
 	 * @return the String Representation of the Polynom
 	 */
-	public String getPolynomRepresentation() {
+	public String getFunctionRepresentation() {
 		if (algo == null) {
 			defaultAlgorithm("There have to be a Algorithm to get a Polynomial reprensantation.");
 		}
-		if (dimension == 3) {
+		if (dimension == 4) {
 			return getPolynomRepresentation3d();
 		}
 		f = algo.getFunction();
@@ -254,13 +258,13 @@ public class Polyfitter {
 		addPoints(pointstoadd);
 	}
 
-	public void addPoint(double x, double y, double z) {
+	public void addPoint(double x, double y, double w) {
 		if (!dimensionequal(3)) {
 			System.out
 					.println("addPoint failed. You can not mix points from diffent dimensions.");
 			return;
 		}
-		float[][] pointstoadd = { { (float) x, (float) y, (float) z } };
+		float[][] pointstoadd = { { (float) x, (float) y, (float) w } };
 		addPoints(pointstoadd);
 	}
 
@@ -350,6 +354,7 @@ public class Polyfitter {
 	 * @param pointcloud
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private Function useOptimasation(ArrayList<float[]> pointcloud) {
 		boolean ausgabe = false;
 		for (Optimize o : optimize) {
@@ -479,20 +484,11 @@ public class Polyfitter {
 	}
 
 	/**
-	 * Returning a new Pointcloud, which only inhabitate the choosen elements,
-	 * of the given Vector v.
+	 * Returning a the Pointcloud.
 	 * 
 	 * @return
 	 */
 	private ArrayList<float[]> getPointsToFit() {
-		// Integer[] a = new Integer[0];
-		// ArrayList<float[]> tofit = new ArrayList<float[]>();
-		// for (float[] p : pointcloud) {
-		// for (Integer att : v.toArray(a)) {
-		// pnd.addElement(p.getElementbyNumber(att));
-		// }
-		// tofit.add(pnd);
-		// }
 		return getPointcloud();
 	}
 
@@ -554,18 +550,16 @@ public class Polyfitter {
 		// } else {
 		// str += algo.getClass().getName();
 		// }
-		// str += "\n";
-
-		str += "Polynom: " + getPolynomRepresentation() + "\n";
+		// str += "\n"
 
 		switch (dimension) {
-		case 1:
+		case 2:
 			str += "\tx\t|\tp(X)";
 			break;
-		case 2:
+		case 3:
 			str += "\tx\t|\ty\t|\tp(x)";
 			break;
-		case 3:
+		case 4:
 			str += "\tx\t|\ty\t|\tz\t|\tp(x)";
 			str += "\n";
 			str += String3d();
@@ -576,7 +570,10 @@ public class Polyfitter {
 		if (pointcloud != null) {
 			str += "\n";
 			for (float[] point : pointcloud) {
-				for (int j = 0; j < pointcloud.get(0).length; j++) {
+				if (point[2] != 0) {
+					str += " //";
+				}
+				for (int j = 0; j < pointcloud.get(0).length - 1; j++) {
 					str += "\t" + df.format(point[j]) + "\t|";
 				}
 				str += "\t" + df.format(getValue(point[0])) + "\n";
@@ -584,6 +581,7 @@ public class Polyfitter {
 		} else {
 			str += "No Points are given\n";
 		}
+		str += "Function: " + getFunctionRepresentation() + "\n";
 		str += "Problem: ";
 		if (algo.getProblem() < 0) {
 			str += "<<not set>>";
@@ -684,37 +682,6 @@ public class Polyfitter {
 			pointcloud.add(a);
 		}
 		dimensionequal(pointcloud.get(0).length);
-	}
-
-	/**
-	 * Method to create Points to given float numbers. If the array.length of
-	 * the given number is higher than 3, the returned Point is an instance of
-	 * PointND.
-	 * 
-	 * @param a
-	 * @return
-	 */
-	private static Point floatToPoint(float[] a) {
-		Point p = null;
-		switch (a.length) {
-		case 1:
-			p = new Point1D(a[0]);
-			break;
-		case 2:
-			p = new Point2D(a[0], a[1]);
-			break;
-		case 3:
-			p = new Point3D(a[0], a[1], a[2]);
-			break;
-		case 4:
-			p = new Point4D(a[0], a[1], a[2], a[3]);
-			break;
-		default:
-			p = new PointND();
-			break;
-		}
-
-		return p;
 	}
 
 	/**
@@ -821,7 +788,7 @@ public class Polyfitter {
 	/**
 	 * Method to Plot a 2 Dimensional function.
 	 */
-	public BufferedImage plotVolume(boolean logScale, int width, int height) {
+	public BufferedImage plotVolume(boolean logScale, int width, int height, int marknr) {
 		Plot p = new Plot("PolyFitter", "Echo Nr.", "GrayScale");
 		p.setFont(new Font(null, Font.BOLD, 20));
 		p.setFrameSize(width, height);
@@ -829,47 +796,42 @@ public class Polyfitter {
 		fit();
 		removeBadPoints();
 		fit();
-		System.out.println(this);
 
 		int xmin = Integer.MAX_VALUE;
 		int xmax = Integer.MIN_VALUE;
 		int ymin = Integer.MAX_VALUE;
 		int ymax = Integer.MIN_VALUE;
 		double dx = 0.01;
+
 		double[] x = new double[pointcloud.size()];
 		double[] y = new double[pointcloud.size()];
 		int i = 0;
 		for (float[] a : pointcloud) {
 			x[i] = a[0];
 			if (x[i] >= xmax) {
-				xmax = (int) x[i] + 1;
+				xmax = (int) x[i];
 			}
-			if (x[i] - 1 <= xmin) {
-				xmin = (int) x[i] - 1;
+			
+			if (x[i] <= xmin) {
+				xmin = (int) x[i];
 			}
 			y[i] = a[1];
 			if (y[i] >= ymax) {
-				ymax = (int) y[i] + 1;
+				ymax = (int) y[i];
 			}
-			if (y[i] - 1 <= ymin) {
-				ymin = (int) (y[i]) - 2;
+			if (y[i] <= ymin) {
+				ymin = (int) (y[i]);
 			}
 			i++;
 		}
-		// for (double a = xmin; a + dx < xmax; a += dx) {
-		// if (getValue(a + dx) + 2 > ymax) {
-		// ymax = (int) getValue(a + dx) + 2;
-		// }
-		// if (getValue(a + dx) - 1 < ymin) {
-		// ymin = (int) getValue(a + dx) - 1;
-		// }
-		// }
-		// ymin*=0.9;
-		// ymax*=1.1;
+		xmin = (int) Math.min(xmin-2, xmin*0.9);
+		xmax = (int) Math.max(xmax+1, xmax*1.1);
+		ymin = (int) Math.min(ymin-1, ymin*0.9);
+		ymax = (int) Math.max(ymax+1, ymax*1.1);
+		
 		p.setLimits(xmin, xmax, ymin, ymax);
 		p.setLineWidth(3);
-		p.addPoints(x, y, Plot.X);
-		p.setLineWidth(2);
+		
 		double a;
 		int changed = 0;
 		for (a = xmin; a + dx <= xmax; a += dx) {
@@ -895,6 +857,26 @@ public class Polyfitter {
 			}
 			p.drawLine(a, y1, a + dx, y2);
 		}
+		
+
+		for (int j = 0; j < x.length; j++) {
+			p.setLineWidth(3);
+			if (j == marknr) {
+				p.setLineWidth(7);
+				p.setColor(logScale ? Color.BLACK: Color.blue);	// marking the current echo
+			}else if (j == 0) {
+				p.setColor(Color.green); // marking the ZeroEcho
+			} else if (pointcloud.get(j)[2] == 0) {
+				p.setColor(logScale ? Color.BLUE : Color.black); // color for the normal points
+			} else {
+				p.setColor(Color.RED); // color for points, that are excluded by the fit
+			}
+			double[] nextx = { x[j] };
+			double[] nexty = { y[j] };
+			p.addPoints(nextx, nexty, Plot.X);
+		}
+		p.setColor(logScale ? Color.BLUE : Color.black);
+		p.setLineWidth(2);
 
 		p.draw();
 		return p.getImagePlus().getBufferedImage();
@@ -1032,19 +1014,6 @@ public class Polyfitter {
 
 	}
 
-	// public void addPoint(Point point) {
-	// if (point.getDimension() == 0) {
-	// System.out
-	// .println("You cannot put an empty point into the pointcloud.");
-	// return;
-	// }
-	// if (pointcloud == null) {
-	// dimension = point.getDimension();
-	// pointcloud = new ArrayList<Point>();
-	// }
-	// pointcloud.add(point);
-	// }
-
 	public void plot(boolean plot3d) {
 		if (v != null) {
 			plothelp(plot3d);
@@ -1063,10 +1032,10 @@ public class Polyfitter {
 		}
 	}
 
-	public class Optimazation {
+	public class Optimization {
 		private ArrayList<Optimize> arg = new ArrayList<>();
 
-		public Optimazation(ArrayList<Optimize> listener) {
+		public Optimization(ArrayList<Optimize> listener) {
 			arg = listener;
 		}
 
@@ -1108,18 +1077,90 @@ public class Polyfitter {
 
 	public void removeBadPoints() {
 		double averagedecay = 0;
-		for (float[] p : pointcloud) {
-			averagedecay += Math.abs(getValue(p[0]) - p[1]);
-		}
-		averagedecay /= pointcloud.size();
+		double numberofpoints = 0;
+		ArrayList<Object[]> potremove = new ArrayList<Object[]>();
 
-		for (int i = 0; i < pointcloud.size() && pointcloud.size() > 3; i++) {
-			float[] next = pointcloud.get(i);
-			if (Math.abs(getValue(next[0]) - next[1]) > averagedecay + 10) {
-				pointcloud.remove(i--);
-				// System.out.println("removed point "+i);
+		for (float[] p : pointcloud) {
+			if (p[2] == 0) {
+				averagedecay += Math.abs(getValue(p[0]) - p[1]);
+				numberofpoints++;
 			}
 		}
-	}
+		averagedecay /= numberofpoints;
+		averagedecay *= 1.1;
 
+		for (int i = 0; i < pointcloud.size(); i++) {
+			float[] next = pointcloud.get(i);
+			double dist = Math.abs(getValue(next[0]) - next[1]);
+			if (dist > averagedecay) {
+				// next[next.length - 1] = 1;
+				Object[] toadd = { dist, i };
+				potremove.add(toadd);
+			}
+		}
+
+		potremove.sort(new java.util.Comparator<Object[]>() {
+
+			@Override
+			public int compare(Object[] o1, Object[] o2) {
+				double dist1 = (double) o1[0];
+				double dist2 = (double) o2[0];
+				if (dist1 < dist2) {
+					return 1;
+				}
+				return dist2 < dist1 ? -1 : 0;
+			}
+
+			@Override
+			public Comparator<Object[]> reversed() {
+				return null;
+			}
+
+			@Override
+			public Comparator<Object[]> thenComparing(
+					Comparator<? super Object[]> other) {
+				return null;
+			}
+
+			@Override
+			public <U> Comparator<Object[]> thenComparing(
+					java.util.function.Function<? super Object[], ? extends U> keyExtractor,
+					Comparator<? super U> keyComparator) {
+				return null;
+			}
+
+			@Override
+			public <U extends Comparable<? super U>> Comparator<Object[]> thenComparing(
+					java.util.function.Function<? super Object[], ? extends U> keyExtractor) {
+				return null;
+			}
+
+			@Override
+			public Comparator<Object[]> thenComparingInt(
+					ToIntFunction<? super Object[]> keyExtractor) {
+				return null;
+			}
+
+			@Override
+			public Comparator<Object[]> thenComparingLong(
+					ToLongFunction<? super Object[]> keyExtractor) {
+				return null;
+			}
+
+			@Override
+			public Comparator<Object[]> thenComparingDouble(
+					ToDoubleFunction<? super Object[]> keyExtractor) {
+				return null;
+			}
+
+		});
+
+		for (int i = 0; i < potremove.size() && numberofpoints > 3
+				&& ((double) i) / pointcloud.size() < 0.1; i++) {
+			float[] next = pointcloud.get((int) potremove.get(i)[1]);
+			next[next.length - 1] = 1;
+			numberofpoints--;
+		}
+
+	}
 }
